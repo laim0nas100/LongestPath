@@ -5,6 +5,7 @@
  */
 package lt.lb.longestpath;
 
+import lt.lb.longestpath.genetic.GeneticSimulation;
 import java.util.concurrent.TimeUnit;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
@@ -19,7 +20,7 @@ public class Simulation {
     
     public static void main(String[] str) {
 
-       new GeneticSimulation(50);
+       new GeneticSimulation(500);
        Log.print("END");
        F.unsafeRun(()->{
            Log.await(1, TimeUnit.HOURS);

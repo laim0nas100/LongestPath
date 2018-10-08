@@ -14,7 +14,7 @@ import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.graphtheory.paths.GraphGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.misc.RandomDistribution;
-import lt.lb.longestpath.GeneticSolution;
+import lt.lb.longestpath.genetic.GeneticSolution;
 import org.junit.Test;
 
 /**

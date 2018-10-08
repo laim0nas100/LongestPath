@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package lt.lb.longestpath;
+package lt.lb.longestpath.genetic;
 
+import lt.lb.longestpath.genetic.GeneticSolution;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,12 +25,12 @@ import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.misc.RandomDistribution;
 import lt.lb.commons.threads.FastWaitingExecutor;
 import lt.lb.commons.threads.FastExecutor;
-import lt.lb.longestpath.GeneticSolution.GraphAgent;
-import lt.lb.longestpath.impl.GraphAgentBreeder;
-import lt.lb.longestpath.impl.GraphAgentMaker;
-import lt.lb.longestpath.impl.GraphAgentMutator;
-import lt.lb.longestpath.impl.GraphAgentSimilarityEvaluator;
-import lt.lb.longestpath.impl.GraphAgentSorter;
+import lt.lb.longestpath.genetic.GeneticSolution.GraphAgent;
+import lt.lb.longestpath.genetic.GraphAgentBreeder;
+import lt.lb.longestpath.genetic.GraphAgentMaker;
+import lt.lb.longestpath.genetic.GraphAgentMutator;
+import lt.lb.longestpath.genetic.GraphAgentSimilarityEvaluator;
+import lt.lb.longestpath.genetic.GraphAgentSorter;
 import lt.lb.neurevol.evolution.Control.NEATConfig;
 import lt.lb.neurevol.evolution.NEAT.Agent;
 import lt.lb.neurevol.evolution.NEAT.Genome;
@@ -48,9 +49,8 @@ import lt.lb.neurevol.evolution.NEAT.interfaces.Pool;
  */
 public class GeneticSimulation {
 
-    public int nodeCount = 100;
+    public int nodeCount = 500;
     public int population = 200;
-    public double crossover_chance = 0.5;
     public NeatPool<GraphAgent> pool;
 
     public GeneticSimulation(int times) {
@@ -61,6 +61,8 @@ public class GeneticSimulation {
         RandomDistribution uniform = RandomDistribution.uniform(sup);
         RandomDistribution dice2 = RandomDistribution.dice(sup, 2);
         GraphGenerator.generateSimpleConnected(dice2, graph, nodeCount, () -> 1d);
+//        GraphGenerator.densify(uniform, graph, 5, ()->1d);
+        Log.print("Graph generated");
 
         NEATConfig<GeneticSolution.GraphAgent> config = new NEATConfig<GeneticSolution.GraphAgent>() {
             @Override
@@ -113,12 +115,24 @@ public class GeneticSimulation {
             Log.print(objs);
             return pool.debug;
         };
-        pool.similarity = 0.5d;
+        pool.maxStaleness = 5;
+        pool.similarity = 1;
         pool.distinctSpecies = 4;
+//        pool.strictSimilarity = true;
         ArrayList<GraphAgent> bestByGeneration = new ArrayList<>();
+        
+        Log.print("initial GENERATION",pool.getGeneration());
+            for(GraphAgent g:pool.getPopulation()){
+                Log.print(g.debug());
+            }
         for (int i = 0; i < times; i++) {
             pool.newGeneration();
             List<GraphAgent> population1 = pool.getPopulation();
+            Log.print("GENERATION",pool.getGeneration());
+            for(GraphAgent g:population1){
+                Log.print(g.debug());
+            }
+            
             GraphAgent currentBest = (GraphAgent) pool.allTimeBest;
             bestByGeneration.add(currentBest);
             Log.print("CurrentBest:" + currentBest);

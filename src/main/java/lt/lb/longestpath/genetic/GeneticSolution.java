@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package lt.lb.longestpath;
+package lt.lb.longestpath.genetic;
 
 import java.util.*;
 import java.util.function.Function;
@@ -19,6 +19,8 @@ import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.misc.RandomDistribution;
 import lt.lb.neurevol.evolution.NEAT.Agent;
 import lt.lb.neurevol.evolution.NEAT.imp.FloatFitness;
+import lt.lb.neurevol.evolution.NEAT.imp.IntFitness;
+import lt.lb.neurevol.evolution.NEAT.interfaces.Fitness;
 
 /**
  *
@@ -31,7 +33,6 @@ public class GeneticSolution {
 
     public static class GraphAgent extends Agent {
 
-        public Set<Long> nodes;
         public List<Long> path;
         public List<GLink> links;
 
@@ -41,11 +42,10 @@ public class GeneticSolution {
 
         public GraphAgent(Collection<Long> path) {
             id = UUIDgenerator.nextUUID("GraphGenome");
-            nodes = new HashSet<>(path);
             this.path = new LinkedList<>(path);
             links = GeneticSolution.getLinks(this.path);
             
-            this.fitness = new FloatFitness((float)path.size());
+            this.fitness = new IntFitness(path.size());
 
         }
         
@@ -53,8 +53,12 @@ public class GeneticSolution {
             return path.toString();
         }
         
-        public boolean isValid(){
-            return path.size() == nodes.size();
+        public String debug(){
+            return id+":"+this.fitness+" "+this.path;
+        }
+        
+        public boolean isValid(Orgraph gr){
+            return true;
         }
 
     }
@@ -71,14 +75,14 @@ public class GeneticSolution {
     public static ArrayList<GraphAgent> crossoverCommonLink(Orgraph gr, GraphAgent g1, GraphAgent g2, Pair<Long> bridge) {
         //assume they are valid for crossover
 
-        if (g1.nodes.contains(bridge.g1)) {
-            if (g2.nodes.contains(bridge.g1)) {
+        if (g1.path.contains(bridge.g1)) {
+            if (g2.path.contains(bridge.g1)) {
                 bridge = bridge.reverse();
             }else{
                 throw new IllegalArgumentException("cant create bridge: " + bridge +" "+g1+g2);
             }
-        } else if (g2.nodes.contains(bridge.g1)) {
-            if (!g1.nodes.contains(bridge.g2)) {
+        } else if (g2.path.contains(bridge.g1)) {
+            if (!g1.path.contains(bridge.g2)) {
                 throw new IllegalArgumentException("cant create bridge: " + bridge.reverse() +" "+g1+g2);
             }
             bridge = bridge.reverse();
@@ -127,20 +131,20 @@ public class GeneticSolution {
         children.add(mergedGenome(reversed(subpaths[3]), b.reverse(), subpaths[1]));
 
         F.iterate(children, (i,g)->{
-           if(g.nodes.isEmpty()){
+           if(g.path.isEmpty()){
                Log.print(g.id, "is empty after");
            } 
         });
         
-        F.filterParallel(children, a->!a.nodes.isEmpty(), r->r.run());
+        F.filterParallel(children, a->!a.path.isEmpty(), r->r.run());
         return children;
     }
 
     public static GraphAgent mutate(RandomDistribution rnd, Orgraph gr, GraphAgent g) {
-        if(g.nodes.isEmpty()){
+        if(g.path.isEmpty()){
             throw new IllegalArgumentException(g.id + g+" is empty");
         }
-        Long cutNode = rnd.pickRandom(g.nodes);
+        Long cutNode = rnd.pickRandom(g.path);
         Integer indexOf = g.path.indexOf(cutNode);
         boolean left = rnd.nextBoolean();
         List<Long> nodes = new ArrayList<>();
@@ -151,8 +155,8 @@ public class GeneticSolution {
                 nodes.add(n);
             }
         });
-        ArrayList<GLink> path = GeneticSolution.getLinks(g.path);
-        Set<Long> visited = g.nodes;
+        ArrayList<GLink> path = GeneticSolution.getLinks(nodes);
+        Set<Long> visited = new HashSet<>(nodes);
         
         List<GLink> genericUniquePathVisitContinued = PathGenerator.genericUniquePathVisitContinued(gr, cutNode, path, visited, PathGenerator.nodeDegreeDistributed(rnd));
         ArrayList<Long> nodesIDs = GeneticSolution.getNodesIDs(genericUniquePathVisitContinued);
