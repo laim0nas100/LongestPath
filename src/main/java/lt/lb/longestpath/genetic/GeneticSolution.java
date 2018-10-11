@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lt.lb.commons.ArrayOp;
-import lt.lb.commons.UUIDgenerator;
 import lt.lb.commons.containers.Pair;
 import lt.lb.commons.containers.Value;
 import lt.lb.commons.graphtheory.*;
@@ -17,10 +16,6 @@ import lt.lb.commons.F;
 import lt.lb.commons.Log;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.misc.RandomDistribution;
-import lt.lb.neurevol.evolution.NEAT.Agent;
-import lt.lb.neurevol.evolution.NEAT.imp.FloatFitness;
-import lt.lb.neurevol.evolution.NEAT.imp.IntFitness;
-import lt.lb.neurevol.evolution.NEAT.interfaces.Fitness;
 
 /**
  *
@@ -31,63 +26,35 @@ public class GeneticSolution {
     public static Function<GLink, Pair<Long>> link2Pair = link -> new Pair<>(link.nodeFrom, link.nodeTo);
     public static Function<Pair<Long>, GLink> pair2link = p -> new GLink(p.g1, p.g2, 1d);
 
-    public static class GraphAgent extends Agent {
-
-        public List<Long> path;
-        public List<GLink> links;
-
-        public int pathSimpleLength() {
-            return path.size();
-        }
-
-        public GraphAgent(Collection<Long> path) {
-            id = UUIDgenerator.nextUUID("GraphGenome");
-            this.path = new LinkedList<>(path);
-            links = GeneticSolution.getLinks(this.path);
-            
-            this.fitness = new IntFitness(path.size());
-
-        }
-        
-        public String toString(){
-            return path.toString();
-        }
-        
-        public String debug(){
-            return id+":"+this.fitness+" "+this.path;
-        }
-        
-        public boolean isValid(Orgraph gr){
-            return true;
-        }
-
-    }
-
-    public static GraphAgent mergedGenome(List<Long> first, Pair<Long> middle, List<Long> last) {
+    public static GraphAgent mergedGenome(Orgraph gr, List<Long> first, Pair<Long> middle, List<Long> last) {
         List<Long> list = new ArrayList<>();
         list.addAll(first);
-        list.add(middle.g1);
-        list.add(middle.g2);
+        if (!first.contains(middle.g1)) {
+            list.add(middle.g1);
+        }
+        if (!last.contains(middle.g2)) {
+            list.add(middle.g2);
+        }
         list.addAll(last);
-        return new GraphAgent(list);
+        return new GraphAgent(list, gr);
     }
 
     public static ArrayList<GraphAgent> crossoverCommonLink(Orgraph gr, GraphAgent g1, GraphAgent g2, Pair<Long> bridge) {
         //assume they are valid for crossover
 
-        if (g1.path.contains(bridge.g1)) {
-            if (g2.path.contains(bridge.g1)) {
+        if (g1.nodes.contains(bridge.g1)) {
+            if (g2.nodes.contains(bridge.g1)) {
                 bridge = bridge.reverse();
-            }else{
-                throw new IllegalArgumentException("cant create bridge: " + bridge +" "+g1+g2);
+            } else {
+                throw new IllegalArgumentException("cant create bridge: " + bridge + " " + g1 + g2);
             }
-        } else if (g2.path.contains(bridge.g1)) {
-            if (!g1.path.contains(bridge.g2)) {
-                throw new IllegalArgumentException("cant create bridge: " + bridge.reverse() +" "+g1+g2);
+        } else if (g2.nodes.contains(bridge.g1)) {
+            if (!g1.nodes.contains(bridge.g2)) {
+                throw new IllegalArgumentException("cant create bridge: " + bridge.reverse() + " " + g1 + g2);
             }
             bridge = bridge.reverse();
         } else {
-            throw new IllegalArgumentException("cant create bridge: " + bridge +" "+g1+g2);
+            throw new IllegalArgumentException("cant create bridge: " + bridge + " " + g1 + g2);
         }
 
         Pair<Long> b = bridge;
@@ -105,17 +72,27 @@ public class GeneticSolution {
         F.iterate(g1.path, (i, l) -> {
             if (i < cut1) {
                 subpaths[0].add(l);
-            } else if (i > cut1) {
+            } else {
                 subpaths[1].add(l);
             }
         });
         F.iterate(g2.path, (i, l) -> {
             if (i < cut2) {
                 subpaths[2].add(l);
-            } else if (i > cut2) {
+            } else {
                 subpaths[3].add(l);
             }
         });
+
+        Log.print("Crossover things");
+        Log.print("Bridge", bridge);
+        Log.print("Parents:");
+        Log.print(g1);
+        Log.print(g2);
+        Log.print("Cuts:", cut1, cut2);
+        for (List<Long> list : subpaths) {
+            Log.print(list);
+        }
 
         /*
          * children
@@ -125,43 +102,59 @@ public class GeneticSolution {
          * 1 + link + 3
          */
         ArrayList<GraphAgent> children = new ArrayList<>();
-        children.add(mergedGenome(subpaths[0], b, subpaths[3]));
-        children.add(mergedGenome(subpaths[0], b, reversed(subpaths[2])));
-        children.add(mergedGenome(subpaths[2], b.reverse(), subpaths[1]));
-        children.add(mergedGenome(reversed(subpaths[3]), b.reverse(), subpaths[1]));
+        children.add(mergedGenome(gr, subpaths[0], b, subpaths[3]));
+        children.add(mergedGenome(gr, subpaths[0], b, reversed(subpaths[2])));
+        children.add(mergedGenome(gr, subpaths[2], b.reverse(), subpaths[1]));
+        children.add(mergedGenome(gr, reversed(subpaths[3]), b.reverse(), subpaths[1]));
 
-        F.iterate(children, (i,g)->{
-           if(g.path.isEmpty()){
-               Log.print(g.id, "is empty after");
-           } 
+        Log.print("Children:");
+        F.iterate(children, (i, c) -> {
+            Log.print(i, c);
         });
-        
-        F.filterParallel(children, a->!a.path.isEmpty(), r->r.run());
+
+        F.iterate(children, (i, g) -> {
+            if (g.nodes.isEmpty()) {
+                Log.print(g.id, "is empty after");
+            }
+        });
+
+//        F.filterParallel(children, a->!a.nodes.isEmpty(), r->r.run());
         return children;
     }
 
     public static GraphAgent mutate(RandomDistribution rnd, Orgraph gr, GraphAgent g) {
-        if(g.path.isEmpty()){
-            throw new IllegalArgumentException(g.id + g+" is empty");
+        if (g.nodes.isEmpty()) {
+            throw new IllegalArgumentException(g.id + g + " is empty");
         }
-        Long cutNode = rnd.pickRandom(g.path);
-        Integer indexOf = g.path.indexOf(cutNode);
+
+        Log.print("\nValid before?", GeneticSolution.isPathValid(gr, g.path), g.path);
+        Integer indexOf = rnd.nextInt(g.path.size());
         boolean left = rnd.nextBoolean();
+        long startNode = g.path.get(indexOf);
         List<Long> nodes = new ArrayList<>();
         F.iterate(g.path, (i, n) -> {
-            if (left && i < indexOf) {
-                nodes.add(n);
-            } else if (i > indexOf) {
+            if (left) {
+                if (i <= indexOf) {
+                    nodes.add(n);
+                }
+            } else if (i >= indexOf) {
                 nodes.add(n);
             }
         });
-        ArrayList<GLink> path = GeneticSolution.getLinks(nodes);
+        if (!left) {
+            Collections.reverse(nodes);
+        }
+        Log.print("Mutation node", startNode, "@", indexOf, "left?", left);
+        Log.print("Mutate:", g.path);
+        Log.print("Cut path", nodes);
+        ArrayList<GLink> path = GeneticSolution.getLinks(nodes, gr);
+        Log.print("Got path", path);
         Set<Long> visited = new HashSet<>(nodes);
-        
-        List<GLink> genericUniquePathVisitContinued = PathGenerator.genericUniquePathVisitContinued(gr, cutNode, path, visited, PathGenerator.nodeDegreeDistributed(rnd));
+
+        List<GLink> genericUniquePathVisitContinued = PathGenerator.genericUniquePathVisitContinued(gr, startNode, path, visited, PathGenerator.nodeDegreeDistributed(rnd));
         ArrayList<Long> nodesIDs = GeneticSolution.getNodesIDs(genericUniquePathVisitContinued);
-        
-        return new GraphAgent(nodesIDs);
+        Log.print("New nodes:", nodesIDs);
+        return new GraphAgent(nodesIDs, gr);
     }
 
     public static <T> ArrayList<T> reversed(List<T> list) {
@@ -183,11 +176,11 @@ public class GeneticSolution {
         return nodes;
     }
 
-    public static ArrayList<GLink> getLinks(List<Long> nodes) {
+    public static ArrayList<GLink> getLinks(List<Long> nodes, Orgraph gr) {
         ArrayList<GLink> links = new ArrayList<>(nodes.size());
         Long[] arr = ArrayOp.newArray(nodes, Long.class);
         for (int i = 1; i < arr.length; i++) {
-            links.add(new GLink(arr[i - 1], arr[i], 1d));
+            links.add(gr.getLink(arr[i - 1], arr[i]).get());
         }
         return links;
 
@@ -241,6 +234,26 @@ public class GeneticSolution {
 
         return bridges;
 
+    }
+
+    public static <T> ArrayList<T> copy(Collection<T> col) {
+        ArrayList<T> copy = new ArrayList<>(col.size());
+        copy.addAll(col);
+        return copy;
+    }
+
+    public static String isPathValid(Orgraph gr, List<Long> nodes) {
+        for (int i = 1; i < nodes.size(); i++) {
+            Long prev = nodes.get(i - 1);
+            Long n = nodes.get(i);
+
+            if (gr.linkExists(prev, n)) {
+                // all good
+            } else {
+                return "No such link:" + prev + " -> " + n;
+            }
+        }
+        return "Yes";
     }
 
     public static <T, C extends Collection> Collection<T> create(Class<C> colClass) {

@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package lt.lb.longestpath.genetic;
+package lt.lb.longestpath.genetic.impl;
 
-import lt.lb.longestpath.genetic.GeneticSolution.GraphAgent;
+import lt.lb.longestpath.genetic.GraphAgent;
 import lt.lb.neurevol.evolution.NEAT.interfaces.AgentSorter;
 
 /**

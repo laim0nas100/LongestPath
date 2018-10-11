@@ -15,16 +15,16 @@ import lt.lb.commons.Log;
  * @author Laimonas-Beniusis-PC
  */
 public class Simulation {
-    
-    
-    
+
     public static void main(String[] str) {
 
-       new GeneticSimulation(500);
-       Log.print("END");
-       F.unsafeRun(()->{
-           Log.await(1, TimeUnit.HOURS);
-       });
+        Log.instant = false;
+        //nodeCount, population, generetions
+        new GeneticSimulation(1000,50,20);
+        Log.print("END");
+        F.unsafeRun(() -> {
+            Log.await(1, TimeUnit.HOURS);
+        });
 
     }
 }
