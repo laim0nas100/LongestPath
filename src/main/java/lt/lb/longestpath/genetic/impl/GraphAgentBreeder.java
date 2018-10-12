@@ -62,7 +62,7 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
         GraphAgent p1 = parents.peekFirst();
         GraphAgent p2 = parents.peekLast();
 
-        List<GLink> bridges = GeneticSolution.getBridges(gr, p1.links, p2.links);
+        List<GLink> bridges = GeneticSolution.getBridges(gr, p1.links.get(), p2.links.get());
         LinkedList<Pair<Long>> pairs = new LinkedList<>();
         F.convertCollection(GeneticSolution.link2Pair, bridges, pairs);
         Predicate<Pair<Long>> good = (p)->{

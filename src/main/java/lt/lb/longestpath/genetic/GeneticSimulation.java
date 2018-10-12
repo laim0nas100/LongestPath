@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import lt.lb.commons.F;
@@ -46,12 +47,13 @@ public class GeneticSimulation {
     public GeneticSimulation(int nodeCount, int population, int times) {
         graph = new Orgraph();
         Random r = new Random(1337);
+
         Supplier<Double> sup = () -> r.nextDouble();
         RandomDistribution uniform = RandomDistribution.uniform(sup);
         RandomDistribution dice2 = RandomDistribution.dice(sup, 2);
-        GraphGenerator.generateSimpleConnected(dice2, graph, nodeCount, dice2.getDoubleSupplier());
-        GraphGenerator.addSomeBidirectionalLinksToAllNodes(dice2, graph, 5, dice2.getDoubleSupplier());
-
+        GraphGenerator.generateSimpleConnected(dice2, graph, nodeCount, () -> 1d);
+        GraphGenerator.addSomeBidirectionalLinksToAllNodes(dice2, graph, 5, () -> 1d);
+        RandomDistribution.uniform(() -> ThreadLocalRandom.current().nextDouble());
         NEATConfig<GraphAgent> config = new NEATConfig<GraphAgent>() {
             @Override
             public Pool<GraphAgent> getPool() {
@@ -105,7 +107,7 @@ public class GeneticSimulation {
         };
         pool.similarity = 0.5d;
         pool.distinctSpecies = 5;
-        pool.maxSpecies = 5;
+        pool.maxSpecies = 10;
 
         Log.print("Initial population");
         F.iterate(pool.getPopulation(), (index, g) -> {
@@ -114,10 +116,12 @@ public class GeneticSimulation {
         graph.sanityCheck();
         ArrayList<GraphAgent> bestByGeneration = new ArrayList<>();
         for (int i = 0; i < times; i++) {
-            pool.newGeneration();
             F.iterate(pool.getPopulation(), (index, g) -> {
+//                g.computeFitness();
                 Log.print(g, GeneticSolution.isPathValid(graph, g.path));
             });
+            pool.newGeneration();
+
             GraphAgent currentBest = (GraphAgent) pool.allTimeBest;
             bestByGeneration.add(currentBest);
             Log.print("CurrentBest:" + currentBest);
@@ -127,18 +131,18 @@ public class GeneticSimulation {
         Log.print("Species:" + pool.getSubpopulations().size());
         Log.println("", "All time best:", "Length:" + pool.allTimeBest.fitness, "Path:" + pool.allTimeBest.path);
         Log.print("Is path valid though?", GeneticSolution.isPathValid(graph, pool.allTimeBest.path));
-        
-        Log.print("Links:",graph.links.size());
-        Log.print("Links bidirectional:",graph.bidirectionalLinkCount());
-        Log.print("Nodes:",graph.nodes.size());
-        
-        Log.print("Times created GraphAgent:"+GraphAgent.timesCreated.get());
-        Log.print("Times mutation was discarded:"+GraphAgent.emptyMutation.get());
-        Log.print("Times crossover was invalid:"+GraphAgent.invalidCrossover.get());
-        Log.print("Time crossover was ok:"+GraphAgent.successfullCrossover.get());
+
+        Log.print("Links:", graph.links.size());
+        Log.print("Links bidirectional:", graph.bidirectionalLinkCount());
+        Log.print("Nodes:", graph.nodes.size());
+
+        Log.print("Times fitness was computed:" + GraphAgent.timesFitnessComputed.get());
+        Log.print("Times mutation was discarded:" + GraphAgent.emptyMutation.get());
+        Log.print("Times crossover was invalid:" + GraphAgent.invalidCrossover.get());
+        Log.print("Times crossover was ok:" + GraphAgent.successfullCrossover.get());
         graph.sanityCheck();
         Log.printLines(graph.doesNotHaveAPair());
-        
+
         ArrayList<GLink> links = new ArrayList<>(graph.links.values());
         Collections.sort(links, (a, b) -> {
             int c = (int) (a.nodeFrom - b.nodeFrom);
@@ -150,7 +154,7 @@ public class GeneticSimulation {
         });
         Log.print("LINKS::::::::::::");
 //        Log.printLines(links);
-        
+
     }
 
 }

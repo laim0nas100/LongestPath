@@ -18,9 +18,10 @@ public class Simulation {
 
     public static void main(String[] str) {
 
-        Log.instant = false;
+        Log.instant = true;
+        Log.keepBuffer = false;
         //nodeCount, population, generetions
-        new GeneticSimulation(1000,50,20);
+        new GeneticSimulation(200,50,20);
         Log.print("END");
         F.unsafeRun(() -> {
             Log.await(1, TimeUnit.HOURS);

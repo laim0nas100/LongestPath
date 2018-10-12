@@ -41,6 +41,7 @@ public class GraphAgentMaker implements AgentMaker<GraphAgent> {
             GraphAgent agent = new GraphAgent(GeneticSolution.getNodesIDs(path), gr);
             list.add(agent);
             Log.print("is valid?", GeneticSolution.isPathValid(gr, agent.path), agent);
+            agent.computeFitness();
         }
         return list;
     }

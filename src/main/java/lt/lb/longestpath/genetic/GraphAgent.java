@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import lt.lb.commons.UUIDgenerator;
+import lt.lb.commons.containers.LazyValue;
 import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
@@ -27,13 +28,13 @@ public class GraphAgent extends Agent {
     public Orgraph graph;
     public Set<Long> nodes;
     public List<Long> path;
-    public List<GLink> links;
+    public LazyValue<List<GLink>> links;
 
     public int pathSimpleLength() {
         return path.size();
     }
 
-    public static AtomicLong timesCreated = new AtomicLong(0);
+    public static AtomicLong timesFitnessComputed = new AtomicLong(0);
     public static AtomicLong emptyMutation = new AtomicLong(0);
     public static AtomicLong invalidCrossover = new AtomicLong(0);
     public static AtomicLong successfullCrossover = new AtomicLong(0);
@@ -42,12 +43,17 @@ public class GraphAgent extends Agent {
         id = UUIDgenerator.nextUUID("GraphGenome");
         nodes = new HashSet<>(path);
         this.path = new LinkedList<>(path);
-        links = GeneticSolution.getLinks(this.path, gr);
+        links = new LazyValue<>(() -> GeneticSolution.getLinks(this.path, gr));
         this.graph = gr;
+        if(isValid()){
+            computeFitness();
+        }
 
-        this.fitness = new FloatFitness(Algorithms.getPathWeight(links).floatValue());
-        timesCreated.incrementAndGet();
+    }
 
+    public void computeFitness() {
+        timesFitnessComputed.incrementAndGet();
+        this.fitness = new FloatFitness(Algorithms.getPathWeight(path, graph).floatValue());
     }
 
     public GraphAgent(GraphAgent agent) {
