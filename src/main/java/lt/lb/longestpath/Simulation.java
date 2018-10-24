@@ -18,8 +18,8 @@ public class Simulation {
 
     public static void main(String[] str) {
 
-        Log.instant = true;
-        Log.keepBuffer = false;
+        Log.main().async = false;
+        Log.main().keepBufferForFile = false;
         //nodeCount, population, generetions
         new GeneticSimulation(200,50,20);
         Log.print("END");

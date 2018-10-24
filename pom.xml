@@ -5,10 +5,28 @@
     <artifactId>LongestPath</artifactId>
     <version>local-jar</version>
     <packaging>jar</packaging>
+    
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
     <dependencies>
+        <dependency>
+            <groupId>com.github.cptanalatriste</groupId>
+            <artifactId>isula</artifactId>
+            <version>38a65863f73ad28db04910aee977cfc428043ee4</version>
+        </dependency>
         <dependency>
             <groupId>lt.lb.commons</groupId>
             <artifactId>commonslb-core</artifactId>
+            <version>local-jar</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>lt.lb.commons</groupId>
+            <artifactId>commonslb-threads</artifactId>
             <version>local-jar</version>
             <type>jar</type>
         </dependency>

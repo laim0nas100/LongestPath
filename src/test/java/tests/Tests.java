@@ -34,7 +34,7 @@ public class Tests {
     @Test
     public void go() {
 
-        Log.instant = true;
+        Log.main().async = false;
         int nodeCount = 20;
         Orgraph graph = new Orgraph();
         Random r = new Random(1337);
