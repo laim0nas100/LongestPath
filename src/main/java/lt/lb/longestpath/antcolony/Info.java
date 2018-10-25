@@ -6,12 +6,10 @@
 package lt.lb.longestpath.antcolony;
 
 import java.util.Map;
-import java.util.Optional;
 import lt.lb.commons.containers.NumberValue;
 import lt.lb.commons.containers.tuples.Pair;
-import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
-import lt.lb.commons.misc.RandomDistribution;
+import lt.lb.commons.misc.rng.RandomDistribution;
 
 /**
  *
@@ -20,16 +18,17 @@ import lt.lb.commons.misc.RandomDistribution;
 public class Info {
 
     public Orgraph graph;
+    public double useGreed = 0.5;
     public RandomDistribution rng;
 
-    public Optional<NumberValue<Double>> getPheromone(Pair<Long> pair) {
+    public NumberValue<Double> getPheromone(Pair<Long> pair) {
         if (pair.g1 > pair.g2) {
             pair = pair.reverse();
         }
         if (linkPheromones.containsKey(pair)) {
-            return Optional.of(linkPheromones.get(pair));
+            return linkPheromones.get(pair);
         } else {
-            return Optional.empty();
+            return null;
         }
 
     }

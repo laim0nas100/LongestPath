@@ -19,6 +19,8 @@ import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
 import lt.lb.commons.misc.Interval;
+import lt.lb.commons.misc.rng.RandomRange;
+import lt.lb.commons.misc.rng.RandomRanges;
 
 /**
  *
@@ -26,67 +28,10 @@ import lt.lb.commons.misc.Interval;
  */
 public class PheromoneBasedLinkPicker implements ILinkPicker {
 
-    public static class RandomCollectiveRange<T> {
-
-        public List<RandomRange<T>> ranges;
-
-        public Double getLimit() {
-            double lim = 0;
-            for (RandomRange rr : ranges) {
-                lim += rr.sum;
-            }
-            return lim;
-        }
-
-        public RandomCollectiveRange(List<RandomRange<T>> ranges) {
-
-            F.filterInPlace(ranges, r -> r.sum > 0d);
-            if (ranges.isEmpty()) {
-                throw new IllegalArgumentException("No positive ranges found");
-            }
-            this.ranges = ranges;
-        }
-
-        public RandomRange<T> pickMax() {
-            return this.ranges.stream().sorted((r1, r2) -> Double.compare(r1.sum, r2.sum)).findFirst().get();
-        }
-
-        public RandomRange<T> pickMin() {
-            return this.ranges.stream().sorted((r1, r2) -> -Double.compare(r1.sum, r2.sum)).findFirst().get();
-        }
-
-        public RandomRange<T> pickRandom(Double dub) {
-            Double limit = this.getLimit();
-            if (dub < 0 || dub > limit) {
-                throw new IllegalArgumentException(dub + " limit is " + limit);
-            }
-            double cur = 0;
-            int selected = 0;
-            for (int i = 0; i < ranges.size(); i++) {
-                RandomRange rr = ranges.get(i);
-                cur += rr.sum;
-                if (cur > dub) {
-                    selected = i;
-                    break;
-                }
-                
-            }
-            return ranges.get(selected);
-        }
-
+    
+    public PheromoneBasedLinkPicker(Info info){
+        this.info = info;
     }
-
-    public static class RandomRange<T> {
-
-        public T val;
-        public Double sum;
-
-        public RandomRange(T name, Double sum) {
-            this.val = name;
-            this.sum = sum;
-        }
-    }
-
     public Info info;
 
     @Override
@@ -101,28 +46,31 @@ public class PheromoneBasedLinkPicker implements ILinkPicker {
         }
         ArrayList<RandomRange<GLink>> linkRange = new ArrayList<>();
         Interval clamper = new Interval(1d / graph.nodes.size(), 1d); // make low probabilty to select negative pheromone links
+        boolean useGreed = info.useGreed < info.rng.nextDouble();
         F.iterate(links, (i, link) -> {
             long from, to;
             from = link.nodeFrom;
             to = link.nodeTo;
-            Optional<NumberValue<Double>> pheromone = info.getPheromone(new Pair<>(from, to));
-            double sum = 1;
+            NumberValue<Double> pheromone = info.getPheromone(new Pair<>(from, to));
+            double sum = 0;
 
-            if (pheromone.isPresent()) {
-                sum = 1 - pheromone.get().get();
-                sum = clamper.clamp(sum);
+            if (pheromone != null) {
+                sum = pheromone.get();
             }
-            int nodeDegree = graph.getNode(from).get().linksTo.size();
-            //apply greedy node degree nodifier
-            sum *= nodeDegree;
-            
+
+            if (useGreed) {
+                int nodeDegree = graph.getNode(from).get().linksTo.size();
+                //apply greedy node degree nodifier
+                sum *= nodeDegree;
+            }
+
             linkRange.add(new RandomRange<>(link, sum));
         });
 
-        RandomCollectiveRange range = new RandomCollectiveRange(linkRange);
+        RandomRanges range = new RandomRanges(linkRange);
         Double nextDouble = info.rng.nextDouble(range.getLimit());
         RandomRange<GLink> randomRange = range.pickRandom(nextDouble);
-        return Optional.of(randomRange.val);
+        return Optional.of(randomRange.value);
     }
 
 }

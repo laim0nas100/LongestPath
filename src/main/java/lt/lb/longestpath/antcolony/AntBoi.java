@@ -6,13 +6,11 @@
 package lt.lb.longestpath.antcolony;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import lt.lb.commons.containers.LazyValue;
+import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
-import lt.lb.commons.graphtheory.GNode;
-import lt.lb.commons.graphtheory.Orgraph;
-import lt.lb.commons.graphtheory.paths.PathGenerator;
-import lt.lb.longestpath.genetic.GeneticSolution;
+import lt.lb.longestpath.API;
 
 /**
  *
@@ -23,28 +21,25 @@ public class AntBoi {
     public Info info;
     public ArrayList<Long> currentPath = new ArrayList<>();
     
+    public LazyValue<List<GLink>> links = new LazyValue<>(()->{
+       return API.getLinks(currentPath, info.graph);
+    });
+    
+    public LazyValue<Double> cost = new LazyValue<>(()->{
+       return Algorithms.getPathWeight(currentPath, info.graph);
+    });
     
     
-    public AntBoi(Long startingNode){
-        currentPath.add(startingNode);
+    
+    public AntBoi(Info info,List<Long> list){
+        currentPath.addAll(list);
+        this.info = info;
     }
     
-    public void constructInitialSolution(){
-        HashMap<Long, GNode> nodes = info.graph.nodes;
-        Integer node = info.rng.nextInt(nodes.size());
-        List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, node, PathGenerator.nodeDegreeDistributed(info.rng));
-        ArrayList<Long> nodesIDs = GeneticSolution.getNodesIDs(generateLongPathBidirectional);
-        
+    public String toString(){
+        return this.cost.get() +" "+this.currentPath;
     }
     
-    
-    public Long currentNode(){
-        return currentPath.get(currentPath.size()-1);
-    }
-    
-    public boolean pickNextNode(){
-        throw new UnsupportedOperationException("not yet");
-    }
     
     
     
