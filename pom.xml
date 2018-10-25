@@ -26,6 +26,12 @@
         </dependency>
         <dependency>
             <groupId>lt.lb.commons</groupId>
+            <artifactId>commonslb-log</artifactId>
+            <version>local-jar</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>lt.lb.commons</groupId>
             <artifactId>commonslb-threads</artifactId>
             <version>local-jar</version>
             <type>jar</type>

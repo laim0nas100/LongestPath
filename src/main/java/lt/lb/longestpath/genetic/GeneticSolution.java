@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lt.lb.commons.ArrayOp;
-import lt.lb.commons.containers.Pair;
+import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.containers.Value;
 import lt.lb.commons.graphtheory.*;
 import lt.lb.commons.F;

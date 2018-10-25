@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
-import lt.lb.commons.containers.Pair;
+import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.misc.RandomDistribution;
