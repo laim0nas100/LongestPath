@@ -13,7 +13,8 @@ import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.graphtheory.paths.GraphGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
-import lt.lb.commons.misc.RandomDistribution;
+import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.longestpath.API;
 import lt.lb.longestpath.genetic.GeneticSolution;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class Tests {
         for (int i = 0; i < 10; i++) {
             List<GLink> path = PathGenerator.generateLongPathBidirectional(graph, uniform.pickRandom(graph.nodes.keySet()), PathGenerator.nodeDegreeDistributed(uniform));
             Log.print(path);
-            Log.print(GeneticSolution.getNodesIDs(path));
+            Log.print(API.getNodesIDs(path));
         }
 
     }

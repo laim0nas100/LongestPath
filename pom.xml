@@ -14,11 +14,6 @@
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>com.github.cptanalatriste</groupId>
-            <artifactId>isula</artifactId>
-            <version>38a65863f73ad28db04910aee977cfc428043ee4</version>
-        </dependency>
-        <dependency>
             <groupId>lt.lb.commons</groupId>
             <artifactId>commonslb-core</artifactId>
             <version>local-jar</version>
@@ -27,6 +22,12 @@
         <dependency>
             <groupId>lt.lb.commons</groupId>
             <artifactId>commonslb-log</artifactId>
+            <version>local-jar</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>lt.lb.commons</groupId>
+            <artifactId>commonslb-io</artifactId>
             <version>local-jar</version>
             <type>jar</type>
         </dependency>
