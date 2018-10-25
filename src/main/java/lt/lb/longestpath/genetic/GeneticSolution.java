@@ -6,16 +6,14 @@
 package lt.lb.longestpath.genetic;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.containers.tuples.Pair;
-import lt.lb.commons.containers.Value;
 import lt.lb.commons.graphtheory.*;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
-import lt.lb.commons.misc.RandomDistribution;
+import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.longestpath.API;
 
 /**
  *
@@ -23,8 +21,7 @@ import lt.lb.commons.misc.RandomDistribution;
  */
 public class GeneticSolution {
 
-    public static Function<GLink, Pair<Long>> link2Pair = link -> new Pair<>(link.nodeFrom, link.nodeTo);
-    public static Function<Pair<Long>, GLink> pair2link = p -> new GLink(p.g1, p.g2, 1d);
+    
 
     public static GraphAgent mergedGenome(Orgraph gr, List<Long> first, Pair<Long> middle, List<Long> last) {
         List<Long> list = new ArrayList<>();
@@ -103,9 +100,9 @@ public class GeneticSolution {
          */
         ArrayList<GraphAgent> children = new ArrayList<>();
         children.add(mergedGenome(gr, subpaths[0], b, subpaths[3]));
-        children.add(mergedGenome(gr, subpaths[0], b, reversed(subpaths[2])));
+        children.add(mergedGenome(gr, subpaths[0], b, API.reversed(subpaths[2])));
         children.add(mergedGenome(gr, subpaths[2], b.reverse(), subpaths[1]));
-        children.add(mergedGenome(gr, reversed(subpaths[3]), b.reverse(), subpaths[1]));
+        children.add(mergedGenome(gr, API.reversed(subpaths[3]), b.reverse(), subpaths[1]));
 
         Log.print("Children:");
         F.iterate(children, (i, c) -> {
@@ -127,7 +124,7 @@ public class GeneticSolution {
             throw new IllegalArgumentException(g.id + g + " is empty");
         }
 
-        Log.print("\nValid before?", GeneticSolution.isPathValid(gr, g.path), g.path);
+        Log.print("\nValid before?", API.isPathValid(gr, g.path), g.path);
         Integer indexOf = rnd.nextInt(g.path.size());
         boolean left = rnd.nextBoolean();
         long startNode = g.path.get(indexOf);
@@ -147,64 +144,17 @@ public class GeneticSolution {
         Log.print("Mutation node", startNode, "@", indexOf, "left?", left);
         Log.print("Mutate:", g.path);
         Log.print("Cut path", nodes);
-        ArrayList<GLink> path = GeneticSolution.getLinks(nodes, gr);
+        ArrayList<GLink> path = API.getLinks(nodes, gr);
         Log.print("Got path", path);
         Set<Long> visited = new HashSet<>(nodes);
 
         List<GLink> genericUniquePathVisitContinued = PathGenerator.genericUniquePathVisitContinued(gr, startNode, path, visited, PathGenerator.nodeDegreeDistributed(rnd));
-        ArrayList<Long> nodesIDs = GeneticSolution.getNodesIDs(genericUniquePathVisitContinued);
+        ArrayList<Long> nodesIDs = API.getNodesIDs(genericUniquePathVisitContinued);
         Log.print("New nodes:", nodesIDs);
         return new GraphAgent(nodesIDs, gr);
     }
 
-    public static <T> ArrayList<T> reversed(List<T> list) {
-        ArrayList<T> reversed = new ArrayList<>();
-        reversed.addAll(list);
-        Collections.reverse(reversed);
-        return reversed;
-    }
-
-    public static ArrayList<Long> getNodesIDs(List<GLink> path) {
-        ArrayList<Long> nodes = new ArrayList<>();
-        if (path.isEmpty()) {
-            return nodes;
-        }
-        nodes.add(path.get(0).nodeFrom);
-        F.iterate(path, (i, link) -> {
-            nodes.add(link.nodeTo);
-        });
-        return nodes;
-    }
-
-    public static ArrayList<GLink> getLinks(List<Long> nodes, Orgraph gr) {
-        ArrayList<GLink> links = new ArrayList<>(nodes.size());
-        Long[] arr = ArrayOp.newArray(nodes, Long.class);
-        for (int i = 1; i < arr.length; i++) {
-            links.add(gr.getLink(arr[i - 1], arr[i]).get());
-        }
-        return links;
-
-    }
-
-    public static ArrayList<GNode> getNodes(Orgraph gr, List<GLink> path) {
-        ArrayList<GNode> nodes = new ArrayList<>();
-        if (path.isEmpty()) {
-            return nodes;
-        }
-        F.iterate(getNodesIDs(path), (i, ID) -> {
-            Optional<GNode> node = gr.getNode(ID);
-            nodes.add(node.get());
-        });
-        return nodes;
-    }
-
-    public static List<Long> getIntersections(Orgraph gr, List<GLink> path1, List<GLink> path2) {
-        List<GNode> nodes1 = getNodes(gr, path1);
-        List<GNode> nodes2 = getNodes(gr, path2);
-        Set<Long> nodeTable1 = nodes1.stream().map(n -> n.ID).collect(Collectors.toSet());
-        Set<Long> nodeTable2 = nodes2.stream().map(n -> n.ID).collect(Collectors.toSet());
-        return nodeTable1.stream().filter(n -> nodeTable2.contains(n)).collect(Collectors.toList());
-    }
+    
 
     public static ArrayList<GLink> getPossibleLinks(Orgraph gr, GNode n1, List<GNode> nodes) {
         ArrayList<GLink> links = new ArrayList<>();
@@ -222,8 +172,8 @@ public class GeneticSolution {
 
     public static ArrayList<GLink> getBridges(Orgraph gr, List<GLink> path1, List<GLink> path2) {
 
-        List<GNode> nodes1 = getNodes(gr, path1);
-        List<GNode> nodes2 = getNodes(gr, path2);
+        List<GNode> nodes1 = API.getNodes(gr, path1);
+        List<GNode> nodes2 = API.getNodes(gr, path2);
 
         ArrayList<GLink> bridges = new ArrayList<>();
 
@@ -234,34 +184,6 @@ public class GeneticSolution {
 
         return bridges;
 
-    }
-
-    public static <T> ArrayList<T> copy(Collection<T> col) {
-        ArrayList<T> copy = new ArrayList<>(col.size());
-        copy.addAll(col);
-        return copy;
-    }
-
-    public static String isPathValid(Orgraph gr, List<Long> nodes) {
-        for (int i = 1; i < nodes.size(); i++) {
-            Long prev = nodes.get(i - 1);
-            Long n = nodes.get(i);
-
-            if (gr.linkExists(prev, n)) {
-                // all good
-            } else {
-                return "No such link:" + prev + " -> " + n;
-            }
-        }
-        return "Yes";
-    }
-
-    public static <T, C extends Collection> Collection<T> create(Class<C> colClass) {
-        Value<C> val = new Value<>();
-        F.unsafeRun(() -> {
-            val.set(colClass.newInstance());
-        });
-        return val.get();
     }
 
 }

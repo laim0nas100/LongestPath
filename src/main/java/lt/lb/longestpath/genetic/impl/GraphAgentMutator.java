@@ -7,7 +7,8 @@ package lt.lb.longestpath.genetic.impl;
 
 import lt.lb.commons.Log;
 import lt.lb.commons.graphtheory.Orgraph;
-import lt.lb.commons.misc.RandomDistribution;
+import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.longestpath.API;
 import lt.lb.longestpath.genetic.GeneticSolution;
 import lt.lb.longestpath.genetic.GraphAgent;
 import lt.lb.neurevol.evolution.NEAT.interfaces.AgentMutator;
@@ -35,7 +36,7 @@ public class GraphAgentMutator implements AgentMutator<GraphAgent> {
             return;
         }
         
-        Log.print("Valid mutation?",GeneticSolution.isPathValid(gr, mutate.path),new GraphAgent(agent)," => ",mutate);
+        Log.print("Valid mutation?",API.isPathValid(gr, mutate.path),new GraphAgent(agent)," => ",mutate);
         agent.links = mutate.links;
         agent.nodes = mutate.nodes;
         agent.path = mutate.path;

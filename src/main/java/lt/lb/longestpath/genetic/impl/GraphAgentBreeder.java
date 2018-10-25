@@ -7,8 +7,6 @@ package lt.lb.longestpath.genetic.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -17,7 +15,8 @@ import lt.lb.commons.Log;
 import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
-import lt.lb.commons.misc.RandomDistribution;
+import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.longestpath.API;
 import lt.lb.longestpath.genetic.GeneticSolution;
 import lt.lb.longestpath.genetic.GraphAgent;
 import lt.lb.neurevol.evolution.NEAT.interfaces.AgentBreeder;
@@ -64,7 +63,7 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
 
         List<GLink> bridges = GeneticSolution.getBridges(gr, p1.links.get(), p2.links.get());
         LinkedList<Pair<Long>> pairs = new LinkedList<>();
-        F.convertCollection(GeneticSolution.link2Pair, bridges, pairs);
+        F.convertCollection(API.link2Pair, bridges, pairs);
         Predicate<Pair<Long>> good = (p)->{
             List<Long> asList = Arrays.asList(p.g1,p.g2);
             return !(p1.nodes.containsAll(asList) && p2.nodes.containsAll(asList));
@@ -79,7 +78,7 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
         
 
         GLink pickRandom = uniform.pickRandom(bridges);
-        Pair<Long> bridge = GeneticSolution.link2Pair.apply(pickRandom);
+        Pair<Long> bridge = API.link2Pair.apply(pickRandom);
         ArrayList<GraphAgent> crossoverCommonLink = GeneticSolution.crossoverCommonLink(gr, p1, p2, bridge);
         ArrayList invalid = F.filterInPlace(crossoverCommonLink, p->p.isValid());
         if(!invalid.isEmpty()){
@@ -90,7 +89,7 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
         }
         for(GraphAgent a:crossoverCommonLink){
             
-            String valid = GeneticSolution.isPathValid(gr, a.path);
+            String valid = API.isPathValid(gr, a.path);
             if(!valid.equalsIgnoreCase("Yes")){
                 throw new IllegalStateException(valid+" at:"+a);
             }else{

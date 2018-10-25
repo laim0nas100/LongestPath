@@ -12,8 +12,8 @@ import lt.lb.commons.Log;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
-import lt.lb.commons.misc.RandomDistribution;
-import lt.lb.longestpath.genetic.GeneticSolution;
+import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.longestpath.API;
 import lt.lb.longestpath.genetic.GraphAgent;
 import lt.lb.neurevol.evolution.NEAT.interfaces.AgentMaker;
 
@@ -38,9 +38,9 @@ public class GraphAgentMaker implements AgentMaker<GraphAgent> {
         ArrayList<GraphAgent> list = new ArrayList<>();
         for (int i = 0; i < population; i++) {
             List<GLink> path = PathGenerator.generateLongPathBidirectional(gr, rnd.pickRandom(gr.nodes.keySet()), PathGenerator.nodeDegreeDistributed(rnd));
-            GraphAgent agent = new GraphAgent(GeneticSolution.getNodesIDs(path), gr);
+            GraphAgent agent = new GraphAgent(API.getNodesIDs(path), gr);
             list.add(agent);
-            Log.print("is valid?", GeneticSolution.isPathValid(gr, agent.path), agent);
+            Log.print("is valid?", API.isPathValid(gr, agent.path), agent);
             agent.computeFitness();
         }
         return list;

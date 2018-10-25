@@ -16,6 +16,7 @@ import lt.lb.commons.containers.LazyValue;
 import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
+import lt.lb.longestpath.API;
 import lt.lb.neurevol.evolution.NEAT.Agent;
 import lt.lb.neurevol.evolution.NEAT.imp.FloatFitness;
 
@@ -43,7 +44,7 @@ public class GraphAgent extends Agent {
         id = UUIDgenerator.nextUUID("GraphGenome");
         nodes = new HashSet<>(path);
         this.path = new LinkedList<>(path);
-        links = new LazyValue<>(() -> GeneticSolution.getLinks(this.path, gr));
+        links = new LazyValue<>(() -> API.getLinks(this.path, gr));
         this.graph = gr;
         if(isValid()){
             computeFitness();

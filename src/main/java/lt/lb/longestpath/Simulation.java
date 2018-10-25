@@ -9,6 +9,11 @@ import lt.lb.longestpath.genetic.GeneticSimulation;
 import java.util.concurrent.TimeUnit;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
+import lt.lb.commons.graphtheory.Orgraph;
+import lt.lb.commons.misc.rng.FastRandom;
+import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.longestpath.antcolony.AntsSimulation;
+import lt.lb.longestpath.antcolony.AntsSimulationInfo;
 
 /**
  *
@@ -18,14 +23,29 @@ public class Simulation {
 
     public static void main(String[] str) {
 
-        Log.main().async = false;
+        Log.main().async = true;
         Log.main().keepBufferForFile = false;
-        //nodeCount, population, generetions
-        new GeneticSimulation(200,50,20);
+        
+        Orgraph graph = new Orgraph();
+        F.unsafeRun(()->{
+            API.importGraph(graph, "MyGraph.txt");
+        });
+        Log.printLines(graph.links.values());
+//nodeCount, population, generetions
+//        new GeneticSimulation(200,50,30);
+
+        AntsSimulationInfo asi = new AntsSimulationInfo();
+        FastRandom rng = new FastRandom(1337);
+        RandomDistribution uniform = RandomDistribution.uniform(rng::nextDouble);
+        
+        new AntsSimulation(graph,uniform,asi);
         Log.print("END");
         F.unsafeRun(() -> {
             Log.await(1, TimeUnit.HOURS);
+            System.exit(0);
         });
 
     }
+    
+    
 }
