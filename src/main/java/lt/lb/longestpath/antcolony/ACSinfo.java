@@ -6,6 +6,7 @@
 package lt.lb.longestpath.antcolony;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import lt.lb.commons.containers.NumberValue;
 import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.graphtheory.Orgraph;
@@ -15,8 +16,10 @@ import lt.lb.commons.misc.rng.RandomDistribution;
  *
  * @author Lemmin
  */
-public class Info {
+public class ACSinfo {
 
+    
+    public AtomicLong evluations = new AtomicLong(0);
     public double greedDegree = 0.6;
     public Orgraph graph;
     public double useGreed = 0.5;

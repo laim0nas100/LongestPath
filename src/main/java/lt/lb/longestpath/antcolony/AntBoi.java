@@ -17,30 +17,27 @@ import lt.lb.longestpath.API;
  * @author Lemmin
  */
 public class AntBoi {
-    
-    public Info info;
+
+    public ACSinfo info;
     public ArrayList<Long> currentPath = new ArrayList<>();
-    
-    public LazyValue<List<GLink>> links = new LazyValue<>(()->{
-       return API.getLinks(currentPath, info.graph);
+
+    public LazyValue<List<GLink>> links = new LazyValue<>(() -> {
+        return API.getLinks(currentPath, info.graph);
     });
-    
-    public LazyValue<Double> cost = new LazyValue<>(()->{
-       return Algorithms.getPathWeight(currentPath, info.graph);
+
+    public LazyValue<Double> cost = new LazyValue<>(() -> {
+        info.evluations.incrementAndGet();
+        return Algorithms.getPathWeight(currentPath, info.graph);
     });
-    
-    
-    
-    public AntBoi(Info info,List<Long> list){
+
+    public AntBoi(ACSinfo info, List<Long> list) {
         currentPath.addAll(list);
         this.info = info;
     }
-    
-    public String toString(){
-        return this.cost.get() +" "+this.currentPath;
+
+    @Override
+    public String toString() {
+        return this.cost.get() + " " + this.currentPath;
     }
-    
-    
-    
-    
+
 }

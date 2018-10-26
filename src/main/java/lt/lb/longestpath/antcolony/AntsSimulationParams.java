@@ -9,7 +9,7 @@ package lt.lb.longestpath.antcolony;
  *
  * @author Lemmin
  */
-public class AntsSimulationInfo {
+public class AntsSimulationParams {
     
     
     public int maxStagnation = 30;

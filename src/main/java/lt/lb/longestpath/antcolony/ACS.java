@@ -39,7 +39,7 @@ public class ACS {
     public ExtComparator<AntBoi> cmp = ExtComparator.of((a, b) -> Double.compare(a.cost.get(), b.cost.get()));
     public ArrayList<AntBoi> bests = new ArrayList<>();
 
-    public ArrayList<Long> constructInitialSolution(Info info) {
+    public ArrayList<Long> constructInitialSolution(ACSinfo info) {
         HashMap<Long, GNode> nodes = info.graph.nodes;
         Integer node = info.rng.get().nextInt(nodes.size());
         List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, node, PathGenerator.nodeDegreeDistributed(info.rng.get()));
@@ -47,7 +47,7 @@ public class ACS {
 
     }
 
-    public AntBoi search(Info info, int iterations, int ants, int maxStagnation, double localPheromoneInfluence, double decay) {
+    public AntBoi search(ACSinfo info, int iterations, int ants, int maxStagnation, double localPheromoneInfluence, double decay) {
         Log.print("Start ACS simulation");
         Value<AntBoi> best = new Value<>(new AntBoi(info, this.constructInitialSolution(info)));
         currStagnation = NumberValue.of(0);
@@ -112,7 +112,7 @@ public class ACS {
         return best.get();
     }
 
-    public void localPheromoneUpdate(Info info, AntBoi ant, double localPhero, double initPhero) {
+    public void localPheromoneUpdate(ACSinfo info, AntBoi ant, double localPhero, double initPhero) {
         ArrayList<GLink> links = API.getLinks(ant.currentPath, info.graph);
         F.iterate(links, (i, link) -> {
             Pair<Long> pair = new Pair<>(link.nodeFrom, link.nodeTo);
@@ -122,7 +122,7 @@ public class ACS {
         });
     }
 
-    public void globalPheromoneUpdate(Info info, AntBoi ant, double decay) {
+    public void globalPheromoneUpdate(ACSinfo info, AntBoi ant, double decay) {
         ArrayList<GLink> links = API.getLinks(ant.currentPath, info.graph);
         F.iterate(links, (i, link) -> {
             Pair<Long> pair = new Pair<>(link.nodeFrom, link.nodeTo);

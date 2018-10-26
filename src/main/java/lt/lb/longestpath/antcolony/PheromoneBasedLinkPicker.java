@@ -27,10 +27,10 @@ import lt.lb.commons.misc.rng.RandomRanges;
  */
 public class PheromoneBasedLinkPicker implements ILinkPicker {
 
-    public PheromoneBasedLinkPicker(Info info) {
+    public PheromoneBasedLinkPicker(ACSinfo info) {
         this.info = info;
     }
-    public Info info;
+    public ACSinfo info;
 
     @Override
     public Optional<GLink> apply(Tuple3<Orgraph, Set<Long>, GNode> t) {

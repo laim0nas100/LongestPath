@@ -18,8 +18,9 @@ public class AntsSimulation {
     
     public AntBoi bestBoi;
     public ACS acs;
-    public AntsSimulation(Orgraph graph, ThreadLocal<RandomDistribution> uniform, AntsSimulationInfo asi){
-        Info info = new Info();
+    public ACSinfo info;
+    public AntsSimulation(Orgraph graph, ThreadLocal<RandomDistribution> uniform, AntsSimulationParams asi){
+        info = new ACSinfo();
         info.graph = graph;
         info.rng = uniform;
         info.useGreed = asi.greedyChance;
