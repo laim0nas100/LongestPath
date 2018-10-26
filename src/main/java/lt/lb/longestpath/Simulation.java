@@ -8,8 +8,11 @@ package lt.lb.longestpath;
 import java.io.IOException;
 import lt.lb.longestpath.genetic.GeneticSimulation;
 import java.util.concurrent.TimeUnit;
+import lt.lb.commons.ArrayOp;
 import lt.lb.commons.F;
+import lt.lb.commons.Lambda;
 import lt.lb.commons.Log;
+import lt.lb.commons.containers.Value;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.misc.rng.FastRandom;
 import lt.lb.commons.misc.rng.RandomDistribution;
@@ -30,7 +33,7 @@ public class Simulation {
         Log.main().keepBufferForFile = false;
         Log.main().stackTrace = false;
 
-        simulate200(2);
+        ANTS.simulate200(10);
         Log.print("END");
 
         F.unsafeRun(() -> {
@@ -40,30 +43,7 @@ public class Simulation {
 
     }
 
-    public static void simulate(int times, String pathGraph, String output, AntsSimulationParams asi) throws IOException {
-        Orgraph graph = new Orgraph();
-        API.importGraph(graph, pathGraph);
-        logAntSimulations(graph, asi, rng, times, output);
-    }
-
-    public static void simulate200(int times) throws IOException {
-
-        AntsSimulationParams asi = new AntsSimulationParams();
-        asi.maxStagnation = 50;
-        asi.iterations = 1000;
-        simulate(times, "200.txt", "200ants.txt", asi);
-    }
-    
-    public static void simulate1000(int times) throws IOException {
-        AntsSimulationParams asi = new AntsSimulationParams();
-        asi.maxStagnation = 50;
-        asi.iterations = 1000;
-        asi.ants = 50;
-        simulate(times, "1000.txt", "1000ants.txt", asi);
-
-    }
-
-    public static void logAntSimulations(Orgraph gr, AntsSimulationParams asi, ThreadLocal<RandomDistribution> rng, int times, String path) throws IOException {
+    public static Log getFileLog(String path) throws IOException {
         Log file = new Log();
         file.async = true;
         file.display = false;
@@ -73,18 +53,81 @@ public class Simulation {
         file.timeStamp = false;
 
         Log.changeStream(file, Log.LogStream.FILE, path);
-
-        int nodes = gr.nodes.size();
-        int links = gr.bidirectionalLinkCount();
-        Log.print(file, "Nodes", "Bi-Links", "Ants", "AlowedStagnation", "Iteration reached", "Improvements", "Path evaluations", "Best cost");
-        for (int i = 0; i < times; i++) {
-            AntsSimulation sim = new AntsSimulation(gr, rng, asi);
-            Log.print(file, nodes, links, asi.ants, asi.maxStagnation, sim.acs.iteration.get(), sim.acs.bests.size() + 1, sim.info.evluations.get(), sim.bestBoi.cost.get());
-        }
-        Log.close(file);
+        return file;
 
     }
 
-    
+    public static void logSimulations(int times, String path, Runnable run, String[] format, Lambda.L0R<Object[]> result) throws IOException {
+        Log file = getFileLog(path);
+        Log.print(file, format);
+        for (int i = 0; i < times; i++) {
+            run.run();
+            Log.print(file, result.apply());
+        }
+        Log.close(file);
+    }
+
+    public static class ANTS {
+
+        public static void simulate(int times, String pathGraph, String output, AntsSimulationParams asi) throws IOException {
+            Orgraph graph = new Orgraph();
+            API.importGraph(graph, pathGraph);
+            logAntSimulations(graph, asi, times, output);
+        }
+
+        public static void simulate200(int times) throws IOException {
+
+            AntsSimulationParams asi = new AntsSimulationParams();
+            asi.maxStagnation = 50;
+            asi.iterations = 1000;
+            simulate(times, "200.txt", "200ants.txt", asi);
+        }
+
+        public static void simulate1000(int times) throws IOException {
+            AntsSimulationParams asi = new AntsSimulationParams();
+            asi.maxStagnation = 50;
+            asi.iterations = 1000;
+            asi.ants = 50;
+            simulate(times, "1000.txt", "1000ants.txt", asi);
+
+        }
+
+        public static void logAntSimulations(Orgraph gr, AntsSimulationParams asi, int times, String path) throws IOException {
+            int nodes = gr.nodes.size();
+            int links = gr.bidirectionalLinkCount();
+            String[] format = ArrayOp.asArray(
+                    "Nodes",
+                    "Bi-Links",
+                    "Ants",
+                    "AlowedStagnation",
+                    "Iteration reached",
+                    "Improvements",
+                    "Path evaluations",
+                    "Best cost"
+            );
+            Value<AntsSimulation> sim = new Value<>();
+            Runnable run = () -> {
+                sim.set(new AntsSimulation(gr, rng, asi));
+            };
+
+            Lambda.L0R<Object[]> printer = Lambda.of(() -> {
+                AntsSimulation s = sim.get();
+                return new Object[]{
+                    nodes, links,
+                    asi.ants,
+                    asi.maxStagnation,
+                    s.acs.iteration.get(),
+                    s.acs.bests.size() + 1,
+                    s.info.evluations.get(),
+                    s.bestBoi.cost.get()
+                };
+            });
+            
+            logSimulations(times, path, run, format, printer);
+            
+
+        }
+
+    }
 
 }
