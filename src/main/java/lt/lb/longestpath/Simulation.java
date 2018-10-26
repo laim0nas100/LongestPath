@@ -18,6 +18,9 @@ import lt.lb.commons.misc.rng.FastRandom;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.longestpath.antcolony.AntsSimulation;
 import lt.lb.longestpath.antcolony.AntsSimulationParams;
+import lt.lb.longestpath.genetic.GeneticSimulationParams;
+import lt.lb.longestpath.genetic.GraphAgent;
+import lt.lb.neurevol.evolution.NEAT.NeatPool;
 
 /**
  *
@@ -33,7 +36,7 @@ public class Simulation {
         Log.main().keepBufferForFile = false;
         Log.main().stackTrace = false;
 
-        ANTS.simulate200(10);
+        GA.simulate200(50);
         Log.print("END");
 
         F.unsafeRun(() -> {
@@ -92,7 +95,7 @@ public class Simulation {
 
         }
 
-        public static void logAntSimulations(Orgraph gr, AntsSimulationParams asi, int times, String path) throws IOException {
+        public static void logAntSimulations(Orgraph gr, AntsSimulationParams par, int times, String path) throws IOException {
             int nodes = gr.nodes.size();
             int links = gr.bidirectionalLinkCount();
             String[] format = ArrayOp.asArray(
@@ -107,15 +110,16 @@ public class Simulation {
             );
             Value<AntsSimulation> sim = new Value<>();
             Runnable run = () -> {
-                sim.set(new AntsSimulation(gr, rng, asi));
+                sim.set(new AntsSimulation(gr, rng, par));
             };
 
             Lambda.L0R<Object[]> printer = Lambda.of(() -> {
                 AntsSimulation s = sim.get();
                 return new Object[]{
-                    nodes, links,
-                    asi.ants,
-                    asi.maxStagnation,
+                    nodes,
+                    links,
+                    par.ants,
+                    par.maxStagnation,
                     s.acs.iteration.get(),
                     s.acs.bests.size() + 1,
                     s.info.evluations.get(),
@@ -130,4 +134,69 @@ public class Simulation {
 
     }
 
+    public static class GA{
+        
+        public static void simulate200(int times) throws IOException{
+            GeneticSimulationParams param = new GeneticSimulationParams();
+            param.maxStagnation = 50;
+            param.iterations = 1000;
+            simulate(times, "200.txt", "200GA.txt", param);
+        }
+        
+        public static void simulate(int times, String pathGraph, String output, GeneticSimulationParams par) throws IOException {
+            Orgraph graph = new Orgraph();
+            API.importGraph(graph, pathGraph);
+            logGASimulations(graph, par, times, output);
+        }
+        
+        public static void logGASimulations(Orgraph gr, GeneticSimulationParams par, int times, String path) throws IOException{
+            int nodes = gr.nodes.size();
+            int links = gr.bidirectionalLinkCount();
+            String[] format = ArrayOp.asArray(
+                    "Nodes",
+                    "Bi-Links",
+                    "Population",
+                    "AlowedStagnation",
+                    "TargetSpecies",
+                    "MaxSpecies",
+                    "Species at end",
+                    "Generation reached",
+                    "Ok crossovers",
+                    "Invalid crossovers",
+                    "Improvements",
+                    "Path evaluations",
+                    "Best cost"
+            );
+            Value<GeneticSimulation> sim = new Value<>();
+            Lambda.L0R<Object[]> printer = Lambda.of(() -> {
+                NeatPool p = sim.get().pool;
+                return new Object[]{
+                    nodes,
+                    links,
+                    par.population,
+                    par.maxStagnation,
+                    par.distinctSpecies,
+                    par.maxSpecies,
+                    p.species.size(),
+                    p.generation,
+                    GraphAgent.successfullCrossover.get(),
+                    GraphAgent.invalidCrossover.get(),
+                    sim.get().improvements,
+                    GraphAgent.timesFitnessComputed.get(),
+                    p.allTimeBest.fitness
+                };
+            });
+            Runnable run = () -> {
+                GraphAgent.emptyMutation.set(0L);
+                GraphAgent.invalidCrossover.set(0);
+                GraphAgent.successfullCrossover.set(0);
+                GraphAgent.timesFitnessComputed.set(0);
+                sim.set(new GeneticSimulation(gr, rng, par));
+                
+            };
+            
+            logSimulations(times, path, run, format, printer);
+        }
+    }
+    
 }

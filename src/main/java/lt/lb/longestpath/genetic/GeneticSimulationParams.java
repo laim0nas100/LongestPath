@@ -9,9 +9,10 @@ package lt.lb.longestpath.genetic;
  *
  * @author laim0nas100
  */
-public class GeneticSimulationInfo {
+public class GeneticSimulationParams {
+    public int maxStagnation = 50;
     public int iterations = 100;
-    public int population = 100;
+    public int population = 40;
     public double initSimilarity = 0.5;
     public int maxSpecies = 10;
     public int distinctSpecies = 5;

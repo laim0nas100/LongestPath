@@ -38,8 +38,9 @@ import lt.lb.neurevol.evolution.NEAT.interfaces.Pool;
 public class GeneticSimulation {
 
     public NeatPool<GraphAgent> pool;
+    public int improvements = 0;
 
-    public GeneticSimulation(Orgraph graph, RandomDistribution uniform,GeneticSimulationInfo info) {
+    public GeneticSimulation(Orgraph graph, ThreadLocal<RandomDistribution> uniform,GeneticSimulationParams info) {
         NEATConfig<GraphAgent> config = new NEATConfig<GraphAgent>() {
             @Override
             public Pool<GraphAgent> getPool() {
@@ -48,17 +49,17 @@ public class GeneticSimulation {
 
             @Override
             public AgentMaker<GraphAgent> getMaker() {
-                return new GraphAgentMaker(graph, uniform, info.population);
+                return new GraphAgentMaker(graph, uniform.get(), info.population);
             }
 
             @Override
             public AgentBreeder<GraphAgent> getBreeder() {
-                return new GraphAgentBreeder(graph, uniform, info.crossoverChance);
+                return new GraphAgentBreeder(graph, uniform.get(), info.crossoverChance);
             }
 
             @Override
             public AgentMutator<GraphAgent> getMutator() {
-                return new GraphAgentMutator(graph, uniform);
+                return new GraphAgentMutator(graph, uniform.get());
             }
 
             @Override
@@ -78,7 +79,7 @@ public class GeneticSimulation {
                 return s;
             }
 
-            Executor fastExe = new FastWaitingExecutor(5, 1, TimeUnit.SECONDS);
+            Executor fastExe = new FastWaitingExecutor(5, 10, TimeUnit.SECONDS);
 
             @Override
             public Executor getExecutor() {
@@ -101,16 +102,26 @@ public class GeneticSimulation {
         });
         graph.sanityCheck();
         ArrayList<GraphAgent> bestByGeneration = new ArrayList<>();
+        int stagnation = 0;
         for (int i = 0; i < info.iterations; i++) {
-            F.iterate(pool.getPopulation(), (index, g) -> {
-//                g.computeFitness();
-                Log.print(g, API.isPathValid(graph, g.path));
-            });
+            GraphAgent oldBest = pool.allTimeBest;
+            
+            Log.main().disable = true;
             pool.newGeneration();
-
             GraphAgent currentBest = (GraphAgent) pool.allTimeBest;
+            
+            if(oldBest == currentBest){
+                stagnation++;
+            }else{
+                improvements++;
+                stagnation = 0;
+            }
             bestByGeneration.add(currentBest);
-            Log.print("CurrentBest:" + currentBest);
+            Log.main().disable = false;
+            Log.print("Iteration "+i,"Stagnation "+stagnation);
+            if(stagnation > info.maxStagnation){
+                break;
+            }
         }
         Log.print("Bests:");
         Log.printLines(bestByGeneration);
@@ -126,15 +137,7 @@ public class GeneticSimulation {
         Log.print("Times mutation was discarded:" + GraphAgent.emptyMutation.get());
         Log.print("Times crossover was invalid:" + GraphAgent.invalidCrossover.get());
         Log.print("Times crossover was ok:" + GraphAgent.successfullCrossover.get());
-        graph.sanityCheck();
-        Log.printLines(graph.doesNotHaveAPair());
-
-        ArrayList<GLink> links = new ArrayList<>(graph.links.values());
-        
-        Collections.sort(links,API.linkComparatorPretty);
-        Log.print("LINKS::::::::::::");
-//        Log.printLines(links);
-
+       
     }
 
 }
