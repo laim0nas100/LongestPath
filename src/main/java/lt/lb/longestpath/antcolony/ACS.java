@@ -8,7 +8,10 @@ package lt.lb.longestpath.antcolony;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import lt.lb.commons.F;
+import lt.lb.commons.Log;
+import lt.lb.commons.containers.BooleanValue;
 import lt.lb.commons.containers.NumberValue;
 import lt.lb.commons.containers.Value;
 import lt.lb.commons.containers.tuples.Pair;
@@ -17,7 +20,8 @@ import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.GNode;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.misc.ExtComparator;
-import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.commons.threads.FastWaitingExecutor;
+import lt.lb.commons.threads.TaskBatcher;
 import lt.lb.longestpath.API;
 
 /**
@@ -30,22 +34,26 @@ public class ACS {
 
     }
 
+    public NumberValue<Integer> iteration;
+    public NumberValue<Integer> currStagnation;
     public ExtComparator<AntBoi> cmp = ExtComparator.of((a, b) -> Double.compare(a.cost.get(), b.cost.get()));
     public ArrayList<AntBoi> bests = new ArrayList<>();
-    public int antCount = 10;
 
     public ArrayList<Long> constructInitialSolution(Info info) {
         HashMap<Long, GNode> nodes = info.graph.nodes;
-        Integer node = info.rng.nextInt(nodes.size());
-        List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, node, PathGenerator.nodeDegreeDistributed(info.rng));
+        Integer node = info.rng.get().nextInt(nodes.size());
+        List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, node, PathGenerator.nodeDegreeDistributed(info.rng.get()));
         return API.getNodesIDs(generateLongPathBidirectional);
 
     }
 
-    public AntBoi search(Info info, int iterations, int ants, double cLocalPhero, double decay) {
+    public AntBoi search(Info info, int iterations, int ants, int maxStagnation, double localPheromoneInfluence, double decay) {
+        Log.print("Start ACS simulation");
         Value<AntBoi> best = new Value<>(new AntBoi(info, this.constructInitialSolution(info)));
-        RandomDistribution rng = info.rng;
+        currStagnation = NumberValue.of(0);
+
         double initPheromone = 1d / best.get().cost.get();
+        Log.print("Init pheromone:" + initPheromone);
         //init pheromone table
         info.linkPheromones = new HashMap<>();
         Long nodeSize = (long) info.graph.nodes.size();
@@ -53,29 +61,55 @@ public class ACS {
             Pair<Long> pair = new Pair<>(link.nodeFrom, link.nodeTo);
             info.setPheromone(pair, initPheromone);
         });
+        FastWaitingExecutor exeMain = new FastWaitingExecutor(ants);
+        
+
         PheromoneBasedLinkPicker picker = new PheromoneBasedLinkPicker(info);
-        F.repeat(iterations, i -> {
-            F.repeat(ants, j -> {
-                Long randomNode = rng.nextLong(nodeSize);
-                List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, randomNode, picker);
-                ArrayList<Long> nodes = API.getNodesIDs(generateLongPathBidirectional);
-                AntBoi ant = new AntBoi(info, nodes);
-                AntBoi prevBest = best.get();
-                best.set(cmp.max(best.get(), ant));
+        iteration = NumberValue.of(0);
+        for (; iteration.get() < iterations; iteration.incrementAndGet()) {
+            BooleanValue updated = BooleanValue.FALSE();
+            ConcurrentLinkedDeque<Runnable> updates = new ConcurrentLinkedDeque<>();
+            TaskBatcher batcher = new TaskBatcher(exeMain);
+            for (int j = 0; j < ants; j++) {
+                
+                batcher.execute(() -> {
+                    Long randomNode = info.rng.get().nextLong(nodeSize);
+                    List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, randomNode, picker);
+                    ArrayList<Long> nodes = API.getNodesIDs(generateLongPathBidirectional);
 
-                if (prevBest != best.get()) {
-                    this.bests.add(prevBest);
-                }
-                this.localPheromoneUpdate(info, ant, cLocalPhero, initPheromone);
-            });
+                    
+                    
+                    updates.add(() -> {
+                        AntBoi ant = new AntBoi(info, nodes);
+
+                        AntBoi prevBest = best.get();
+                        best.set(cmp.max(best.get(), ant));
+
+                        if (prevBest != best.get()) {
+                            this.bests.add(prevBest);
+                            updated.setTrue();
+                        }
+                        this.localPheromoneUpdate(info, ant, localPheromoneInfluence, initPheromone);
+                    });
+                });
+
+            }
+            batcher.awaitFailOnFirst();
+            for(Runnable up:updates){
+                up.run();
+            }
+            Log.print("Iteration " + iteration.get(), " Stagnation " + currStagnation.get());
             this.globalPheromoneUpdate(info, best.get(), decay);
-
-        });
+            if (updated.get()) {
+                currStagnation.set(0);
+            } else {
+                currStagnation.incrementAndGet();
+            }
+            if (currStagnation.get() > maxStagnation) {
+                break;
+            }
+        }
         return best.get();
-    }
-
-    public void iteration() {
-
     }
 
     public void localPheromoneUpdate(Info info, AntBoi ant, double localPhero, double initPhero) {

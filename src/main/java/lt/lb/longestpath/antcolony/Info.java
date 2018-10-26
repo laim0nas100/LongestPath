@@ -17,9 +17,10 @@ import lt.lb.commons.misc.rng.RandomDistribution;
  */
 public class Info {
 
+    public double greedDegree = 0.6;
     public Orgraph graph;
     public double useGreed = 0.5;
-    public RandomDistribution rng;
+    public ThreadLocal<RandomDistribution> rng;
 
     public NumberValue<Double> getPheromone(Pair<Long> pair) {
         if (pair.g1 > pair.g2) {

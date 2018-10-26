@@ -63,12 +63,11 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
 
         List<GLink> bridges = GeneticSolution.getBridges(gr, p1.links.get(), p2.links.get());
         LinkedList<Pair<Long>> pairs = new LinkedList<>();
-        F.convertCollection(API.link2Pair, bridges, pairs);
         Predicate<Pair<Long>> good = (p)->{
             List<Long> asList = Arrays.asList(p.g1,p.g2);
             return !(p1.nodes.containsAll(asList) && p2.nodes.containsAll(asList));
         };
-        F.filterInPlace(pairs, good);
+        bridges.stream().map(API.link2Pair).filter(good).forEach(pairs::add);
         
         
         
@@ -77,8 +76,7 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
         }
         
 
-        GLink pickRandom = uniform.pickRandom(bridges);
-        Pair<Long> bridge = API.link2Pair.apply(pickRandom);
+        Pair<Long> bridge = uniform.pickRandom(pairs);
         ArrayList<GraphAgent> crossoverCommonLink = GeneticSolution.crossoverCommonLink(gr, p1, p2, bridge);
         ArrayList invalid = F.filterInPlace(crossoverCommonLink, p->p.isValid());
         if(!invalid.isEmpty()){

@@ -12,13 +12,12 @@ import java.util.Set;
 import lt.lb.commons.F;
 import lt.lb.commons.containers.NumberValue;
 import lt.lb.commons.containers.tuples.Pair;
-import lt.lb.commons.containers.tuples.Tuple;
+import lt.lb.commons.containers.tuples.Tuple3;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.GNode;
 import lt.lb.commons.graphtheory.Orgraph;
-import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
-import lt.lb.commons.misc.Interval;
+import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.commons.misc.rng.RandomRange;
 import lt.lb.commons.misc.rng.RandomRanges;
 
@@ -28,25 +27,24 @@ import lt.lb.commons.misc.rng.RandomRanges;
  */
 public class PheromoneBasedLinkPicker implements ILinkPicker {
 
-    
-    public PheromoneBasedLinkPicker(Info info){
+    public PheromoneBasedLinkPicker(Info info) {
         this.info = info;
     }
     public Info info;
 
     @Override
-    public Optional<GLink> apply(Tuple<PathGenerator.GraphInfo, GNode> t) {
-        PathGenerator.GraphInfo graphInfo = t.g1;
-        GNode g2 = t.g2;
-        Orgraph graph = graphInfo.graph;
-        Set<Long> visited = graphInfo.visitedNodes;
+    public Optional<GLink> apply(Tuple3<Orgraph, Set<Long>, GNode> t) {
+        GNode g2 = t.g3;
+        Orgraph graph = t.g1;
+        Set<Long> visited = t.g2;
         List<GLink> links = graph.resolveLinkedTo(g2, n -> !visited.contains(n));
         if (links.isEmpty()) {
             return Optional.empty();
         }
         ArrayList<RandomRange<GLink>> linkRange = new ArrayList<>();
-        Interval clamper = new Interval(1d / graph.nodes.size(), 1d); // make low probabilty to select negative pheromone links
-        boolean useGreed = info.useGreed < info.rng.nextDouble();
+        RandomDistribution rng = info.rng.get();
+        boolean useGreed = info.useGreed < rng.nextDouble();
+        boolean useDegree = useGreed && (info.greedDegree < rng.nextDouble());
         F.iterate(links, (i, link) -> {
             long from, to;
             from = link.nodeFrom;
@@ -59,16 +57,21 @@ public class PheromoneBasedLinkPicker implements ILinkPicker {
             }
 
             if (useGreed) {
-                int nodeDegree = graph.getNode(from).get().linksTo.size();
-                //apply greedy node degree nodifier
-                sum *= nodeDegree;
+                if (useDegree) {
+                    int nodeDegree = graph.getNode(to).get().linksTo.size();
+                    //apply greedy node degree nodifier
+                    sum *= nodeDegree;
+                } else {
+                    sum += link.weight;
+                }
+
             }
 
             linkRange.add(new RandomRange<>(link, sum));
         });
 
         RandomRanges range = new RandomRanges(linkRange);
-        Double nextDouble = info.rng.nextDouble(range.getLimit());
+        Double nextDouble = rng.nextDouble(range.getLimit());
         RandomRange<GLink> randomRange = range.pickRandom(nextDouble);
         return Optional.of(randomRange.value);
     }
