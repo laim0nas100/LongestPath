@@ -11,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -19,12 +20,16 @@ import java.util.stream.Collectors;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.F;
 import lt.lb.commons.containers.tuples.Pair;
+import lt.lb.commons.containers.tuples.Tuple;
+import lt.lb.commons.containers.tuples.Tuple3;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.GNode;
 import lt.lb.commons.graphtheory.Orgraph;
+import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
 import lt.lb.commons.interfaces.ReadOnlyIterator;
 import lt.lb.commons.io.FileReader;
 import lt.lb.commons.misc.ExtComparator;
+import lt.lb.commons.misc.rng.RandomDistribution;
 
 /**
  *
@@ -120,11 +125,21 @@ public class API {
     }
     
     public static final ExtComparator<GLink> linkComparatorPretty = ExtComparator.of((a, b) -> {
-            int c = (int) (a.nodeFrom - b.nodeFrom);
-            if (c == 0) {
-                c = (int) (a.nodeTo - b.nodeTo);
-            }
+        int c = (int) (a.nodeFrom - b.nodeFrom);
+        if (c == 0) {
+            c = (int) (a.nodeTo - b.nodeTo);
+        }
 
-            return c;
-        });
+        return c;
+    });
+    
+    public static ILinkPicker probabilityJoinedPickers(Collection<Tuple<Double,ILinkPicker>> pickers, RandomDistribution rng){
+        return (Tuple3<Orgraph, Set<Long>, GNode> t) -> {
+            LinkedList<ILinkPicker> picker = rng.pickRandomDistributed(1, pickers);
+            if(picker.isEmpty()){
+                return Optional.empty();
+            }
+            return picker.getFirst().apply(t);
+        };
+    }
 }

@@ -6,16 +6,17 @@
 package lt.lb.longestpath.genetic;
 
 import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.graphtheory.*;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
+import lt.lb.commons.containers.tuples.Tuple;
+import lt.lb.commons.containers.tuples.Tuples;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
+import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
 import lt.lb.commons.interfaces.Equator;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.longestpath.API;
@@ -151,7 +152,12 @@ public class GeneticSolution {
         Log.print("Got path", path);
         Set<Long> visited = new HashSet<>(nodes);
 
-        List<GLink> genericUniquePathVisitContinued = PathGenerator.genericUniquePathVisitContinued(gr, startNode, path, visited, PathGenerator.nodeDegreeDistributed(rnd));
+        List<Tuple<Double, ILinkPicker>> pickers = Arrays.asList(
+                Tuples.create(1d, PathGenerator.nodeDegreeDistributed(rnd))
+//                ,Tuples.create(1d, PathGenerator.nodeWeightDistributed(rnd, false))
+        );
+
+        List<GLink> genericUniquePathVisitContinued = PathGenerator.genericUniquePathVisitContinued(gr, startNode, path, visited, API.probabilityJoinedPickers(pickers, rnd));
         ArrayList<Long> nodesIDs = API.getNodesIDs(genericUniquePathVisitContinued);
         Log.print("New nodes:", nodesIDs);
         return new GraphAgent(nodesIDs, gr);
@@ -181,8 +187,9 @@ public class GeneticSolution {
         F.iterate(nodes1, (i, n) -> {
             bridges.addAll(getPossibleLinks(gr, n, nodes2));
         });
-        Stream<GLink> stream = bridges.stream().filter(F.filterDistinct(GLink::equalNodesBidirectional));
-        return F.fillCollection(stream,new ArrayList<>());
+        Predicate<GLink> filterDistinct = F.filterDistinct(GLink::equalNodesBidirectional);
+        Stream<GLink> stream = bridges.stream().filter(filterDistinct);
+        return F.fillCollection(stream, new ArrayList<>());
 
     }
 

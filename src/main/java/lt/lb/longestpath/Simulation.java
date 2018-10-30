@@ -36,7 +36,7 @@ public class Simulation {
         Log.main().keepBufferForFile = false;
         Log.main().stackTrace = false;
 
-        GA.simulate200(50);
+        GA.simulate200(1);
         Log.print("END");
 
         F.unsafeRun(() -> {

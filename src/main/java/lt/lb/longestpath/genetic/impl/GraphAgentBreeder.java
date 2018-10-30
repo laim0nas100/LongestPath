@@ -35,7 +35,6 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
     public GraphAgentBreeder(Orgraph g, RandomDistribution uniform, double cross) {
         this.uniform = uniform;
         gr = g;
-        low = RandomDistribution.xPower(uniform.getDoubleSupplier(), 2);
         this.crossover_chance = cross;
     }
 
@@ -43,7 +42,7 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
     public List<GraphAgent> breedChild(List<GraphAgent> agents) {
         int size = agents.size();
         GraphAgent child;
-        if (size > 1 && uniform.nextDouble() < crossover_chance) {
+        if (size > 1 && uniform.nextDouble() > crossover_chance) {
             ArrayList<GraphAgent> crossover = crossover(agents);
             if (!crossover.isEmpty()) {
                 return crossover;
@@ -57,21 +56,23 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
     
 
     private ArrayList<GraphAgent> crossover(List<GraphAgent> list) {
-        LinkedList<GraphAgent> parents = uniform.pickRandomPreferLow(list, 2, list.size(), 1);
+        LinkedList<GraphAgent> parents = uniform.pickRandom(list, 2);
         GraphAgent p1 = parents.peekFirst();
         GraphAgent p2 = parents.peekLast();
 
         List<GLink> bridges = GeneticSolution.getBridges(gr, p1.links.get(), p2.links.get());
-        LinkedList<Pair<Long>> pairs = new LinkedList<>();
         Predicate<Pair<Long>> good = (p)->{
             List<Long> asList = Arrays.asList(p.g1,p.g2);
             return !(p1.nodes.containsAll(asList) && p2.nodes.containsAll(asList));
         };
-        bridges.stream().map(API.link2Pair).filter(good).forEach(pairs::add);
+        Log.print("Bridges");
+        
+        ArrayList<Pair<Long>> pairs = F.fillCollection(bridges.stream().map(API.link2Pair).filter(good),new ArrayList<>());
         
         
         
         if (pairs.isEmpty()) {
+            Log.print("Empty corssover pairs :(");
             return new ArrayList<>(0);
         }
         

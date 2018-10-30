@@ -106,7 +106,7 @@ public class GeneticSimulation {
         for (int i = 0; i < info.iterations; i++) {
             GraphAgent oldBest = pool.allTimeBest;
             
-            Log.main().disable = true;
+//            Log.main().disable = true;
             pool.newGeneration();
             GraphAgent currentBest = (GraphAgent) pool.allTimeBest;
             
@@ -117,7 +117,7 @@ public class GeneticSimulation {
                 stagnation = 0;
             }
             bestByGeneration.add(currentBest);
-            Log.main().disable = false;
+//            Log.main().disable = false;
             Log.print("Iteration "+i,"Stagnation "+stagnation);
             if(stagnation > info.maxStagnation){
                 break;
