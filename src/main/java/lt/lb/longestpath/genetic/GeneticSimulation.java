@@ -15,6 +15,7 @@ import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.commons.threads.FastWaitingExecutor;
+import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.longestpath.API;
 import lt.lb.longestpath.genetic.impl.GraphAgentBreeder;
 import lt.lb.longestpath.genetic.impl.GraphAgentMaker;
@@ -79,7 +80,7 @@ public class GeneticSimulation {
                 return s;
             }
 
-            Executor fastExe = new FastWaitingExecutor(5, 10, TimeUnit.SECONDS);
+            Executor fastExe = new FastWaitingExecutor(5, WaitTime.ofSeconds(10));
 
             @Override
             public Executor getExecutor() {

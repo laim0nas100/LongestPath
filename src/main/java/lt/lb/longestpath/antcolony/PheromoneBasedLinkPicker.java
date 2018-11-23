@@ -73,7 +73,7 @@ public class PheromoneBasedLinkPicker implements ILinkPicker {
         RandomRanges range = new RandomRanges(linkRange);
         Double nextDouble = rng.nextDouble(range.getLimit());
         RandomRange<GLink> randomRange = range.pickRandom(nextDouble);
-        return Optional.of(randomRange.value);
+        return Optional.of(randomRange.get());
     }
 
 }

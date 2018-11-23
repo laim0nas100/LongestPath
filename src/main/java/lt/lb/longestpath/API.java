@@ -13,12 +13,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.F;
+import lt.lb.commons.Lambda;
 import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.containers.tuples.Tuple;
 import lt.lb.commons.containers.tuples.Tuple3;
@@ -26,6 +28,7 @@ import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.GNode;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
+import lt.lb.commons.interfaces.Equator;
 import lt.lb.commons.interfaces.ReadOnlyIterator;
 import lt.lb.commons.io.FileReader;
 import lt.lb.commons.misc.ExtComparator;
@@ -36,9 +39,11 @@ import lt.lb.commons.misc.rng.RandomDistribution;
  * @author Lemmin
  */
 public class API {
-    public static Function<GLink, Pair<Long>> link2Pair = link -> new Pair<>(link.nodeFrom, link.nodeTo);
-    public static Function<Pair<Long>, GLink> pair2link = p -> new GLink(p.g1, p.g2, 1d);
-    
+
+    public static Lambda.L1R<GLink, Pair<Long>> link2Pair = link -> new Pair<>(link.nodeFrom, link.nodeTo);
+    public static Lambda.L1R<Pair<Long>, GLink> pair2link = p -> new GLink(p.g1, p.g2, 1d);
+    public static Equator<List<Long>> pathEquator = Objects::equals;
+
     public static <T> ArrayList<T> reversed(List<T> list) {
         ArrayList<T> reversed = new ArrayList<>();
         reversed.addAll(list);
@@ -87,13 +92,19 @@ public class API {
         Set<Long> nodeTable2 = nodes2.stream().map(n -> n.ID).collect(Collectors.toSet());
         return nodeTable1.stream().filter(n -> nodeTable2.contains(n)).collect(Collectors.toList());
     }
-    
+
     public static <T> ArrayList<T> copy(Collection<T> col) {
         ArrayList<T> copy = new ArrayList<>(col.size());
         copy.addAll(col);
         return copy;
     }
 
+    /**
+     *
+     * @param gr
+     * @param nodes
+     * @return Yes/Reason
+     */
     public static String isPathValid(Orgraph gr, List<Long> nodes) {
         for (int i = 1; i < nodes.size(); i++) {
             Long prev = nodes.get(i - 1);
@@ -107,15 +118,15 @@ public class API {
         }
         return "Yes";
     }
-    
-    public static void exportGraph(Orgraph gr,String path) throws FileNotFoundException, UnsupportedEncodingException{
-        ReadOnlyIterator<String> iter = ReadOnlyIterator.of(gr.links.values().stream().sorted(linkComparatorPretty).map(link -> link.nodeFrom +" "+link.nodeTo+" "+link.weight));
+
+    public static void exportGraph(Orgraph gr, String path) throws FileNotFoundException, UnsupportedEncodingException {
+        ReadOnlyIterator<String> iter = ReadOnlyIterator.of(gr.links.values().stream().sorted(linkComparatorPretty).map(link -> link.nodeFrom + " " + link.nodeTo + " " + link.weight));
         FileReader.writeToFile(path, iter);
     }
-    
-    public static void importGraph(Orgraph gr,String path) throws FileNotFoundException, IOException{
+
+    public static void importGraph(Orgraph gr, String path) throws FileNotFoundException, IOException {
         ArrayList<String> readFromFile = FileReader.readFromFile(path);
-        F.iterate(readFromFile, (i,line)->{
+        F.iterate(readFromFile, (i, line) -> {
             String[] s = line.split(" ");
             Long nodeFrom = Long.parseLong(s[0]);
             Long nodeTo = Long.parseLong(s[1]);
@@ -123,20 +134,13 @@ public class API {
             gr.addLink(gr.newLink(nodeFrom, nodeTo, w));
         });
     }
-    
-    public static final ExtComparator<GLink> linkComparatorPretty = ExtComparator.of((a, b) -> {
-        int c = (int) (a.nodeFrom - b.nodeFrom);
-        if (c == 0) {
-            c = (int) (a.nodeTo - b.nodeTo);
-        }
 
-        return c;
-    });
-    
-    public static ILinkPicker probabilityJoinedPickers(Collection<Tuple<Double,ILinkPicker>> pickers, RandomDistribution rng){
+    public static final ExtComparator<GLink> linkComparatorPretty = ExtComparator.ofValues(a -> a.nodeFrom, a -> a.nodeTo);
+
+    public static ILinkPicker probabilityJoinedPickers(Collection<Tuple<Double, ILinkPicker>> pickers, RandomDistribution rng) {
         return (Tuple3<Orgraph, Set<Long>, GNode> t) -> {
             LinkedList<ILinkPicker> picker = rng.pickRandomDistributed(1, pickers);
-            if(picker.isEmpty()){
+            if (picker.isEmpty()) {
                 return Optional.empty();
             }
             return picker.getFirst().apply(t);
