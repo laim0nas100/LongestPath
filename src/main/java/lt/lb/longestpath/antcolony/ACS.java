@@ -42,7 +42,7 @@ public class ACS {
     public ArrayList<Long> constructInitialSolution(ACSinfo info) {
         HashMap<Long, GNode> nodes = info.graph.nodes;
         Integer node = info.rng.get().nextInt(nodes.size());
-        List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, node, PathGenerator.nodeDegreeDistributed(info.rng.get()));
+        List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, node, PathGenerator.nodeDegreeDistributed(info.rng.get(), false));
         return API.getNodesIDs(generateLongPathBidirectional);
 
     }
@@ -62,7 +62,6 @@ public class ACS {
             info.setPheromone(pair, initPheromone);
         });
         FastWaitingExecutor exeMain = new FastWaitingExecutor(ants);
-        
 
         PheromoneBasedLinkPicker picker = new PheromoneBasedLinkPicker(info);
         iteration = NumberValue.of(0);
@@ -71,14 +70,12 @@ public class ACS {
             ConcurrentLinkedDeque<Runnable> updates = new ConcurrentLinkedDeque<>();
             TaskBatcher batcher = new TaskBatcher(exeMain);
             for (int j = 0; j < ants; j++) {
-                
+
                 batcher.execute(() -> {
                     Long randomNode = info.rng.get().nextLong(nodeSize);
                     List<GLink> generateLongPathBidirectional = PathGenerator.generateLongPathBidirectional(info.graph, randomNode, picker);
                     ArrayList<Long> nodes = API.getNodesIDs(generateLongPathBidirectional);
 
-                    
-                    
                     updates.add(() -> {
                         AntBoi ant = new AntBoi(info, nodes);
 
@@ -95,7 +92,7 @@ public class ACS {
 
             }
             batcher.awaitFailOnFirst();
-            for(Runnable up:updates){
+            for (Runnable up : updates) {
                 up.run();
             }
             Log.print("Iteration " + iteration.get(), " Stagnation " + currStagnation.get());

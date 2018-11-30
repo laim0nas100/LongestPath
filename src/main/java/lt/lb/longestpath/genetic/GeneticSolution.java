@@ -153,7 +153,7 @@ public class GeneticSolution {
         Set<Long> visited = new HashSet<>(nodes);
 
         List<Tuple<Double, ILinkPicker>> pickers = Arrays.asList(
-                Tuples.create(1d, PathGenerator.nodeDegreeDistributed(rnd))
+                Tuples.create(1d, PathGenerator.nodeDegreeDistributed(rnd,false))
 //                ,Tuples.create(1d, PathGenerator.nodeWeightDistributed(rnd, false))
         );
 

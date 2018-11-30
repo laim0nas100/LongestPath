@@ -45,7 +45,7 @@ public class Tests {
         GraphGenerator.generateSimpleConnected(dice2, graph, nodeCount, () -> 1d);
         Log.print("Generated graph");
         for (int i = 0; i < 10; i++) {
-            List<GLink> path = PathGenerator.generateLongPathBidirectional(graph, uniform.pickRandom(graph.nodes.keySet()), PathGenerator.nodeDegreeDistributed(uniform));
+            List<GLink> path = PathGenerator.generateLongPathBidirectional(graph, uniform.pickRandom(graph.nodes.keySet()), PathGenerator.nodeDegreeDistributed(uniform, false));
             Log.print(path);
             Log.print(API.getNodesIDs(path));
         }

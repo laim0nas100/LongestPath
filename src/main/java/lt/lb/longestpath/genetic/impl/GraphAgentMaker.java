@@ -37,7 +37,7 @@ public class GraphAgentMaker implements AgentMaker<GraphAgent> {
     public Collection<GraphAgent> initializeGeneration() {
         ArrayList<GraphAgent> list = new ArrayList<>();
         for (int i = 0; i < population; i++) {
-            List<GLink> path = PathGenerator.generateLongPathBidirectional(gr, rnd.pickRandom(gr.nodes.keySet()), PathGenerator.nodeDegreeDistributed(rnd));
+            List<GLink> path = PathGenerator.generateLongPathBidirectional(gr, rnd.pickRandom(gr.nodes.keySet()), PathGenerator.nodeDegreeDistributed(rnd,false));
             GraphAgent agent = new GraphAgent(API.getNodesIDs(path), gr);
             list.add(agent);
             Log.print("is valid?", API.isPathValid(gr, agent.path), agent);

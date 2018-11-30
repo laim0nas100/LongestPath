@@ -16,6 +16,9 @@ import lt.lb.commons.containers.Value;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.misc.rng.FastRandom;
 import lt.lb.commons.misc.rng.RandomDistribution;
+import lt.lb.longestpath.anneal.Annealing;
+import lt.lb.longestpath.anneal.AnnealingInfo;
+import lt.lb.longestpath.anneal.AnnealingResult;
 import lt.lb.longestpath.antcolony.AntsSimulation;
 import lt.lb.longestpath.antcolony.AntsSimulationParams;
 import lt.lb.longestpath.genetic.GeneticSimulationParams;
@@ -36,7 +39,7 @@ public class Simulation {
         Log.main().keepBufferForFile = false;
         Log.main().stackTrace = false;
 
-        GA.simulate200(1);
+        ANN.simulate200(1);
         Log.print("END");
 
         F.unsafeRun(() -> {
@@ -126,30 +129,29 @@ public class Simulation {
                     s.bestBoi.cost.get()
                 };
             });
-            
+
             logSimulations(times, path, run, format, printer);
-            
 
         }
 
     }
 
-    public static class GA{
-        
-        public static void simulate200(int times) throws IOException{
+    public static class GA {
+
+        public static void simulate200(int times) throws IOException {
             GeneticSimulationParams param = new GeneticSimulationParams();
             param.maxStagnation = 50;
             param.iterations = 1000;
             simulate(times, "200.txt", "200GA.txt", param);
         }
-        
+
         public static void simulate(int times, String pathGraph, String output, GeneticSimulationParams par) throws IOException {
             Orgraph graph = new Orgraph();
             API.importGraph(graph, pathGraph);
             logGASimulations(graph, par, times, output);
         }
-        
-        public static void logGASimulations(Orgraph gr, GeneticSimulationParams par, int times, String path) throws IOException{
+
+        public static void logGASimulations(Orgraph gr, GeneticSimulationParams par, int times, String path) throws IOException {
             int nodes = gr.nodes.size();
             int links = gr.bidirectionalLinkCount();
             String[] format = ArrayOp.asArray(
@@ -192,11 +194,78 @@ public class Simulation {
                 GraphAgent.successfullCrossover.set(0);
                 GraphAgent.timesFitnessComputed.set(0);
                 sim.set(new GeneticSimulation(gr, rng, par));
-                
+
             };
-            
+
             logSimulations(times, path, run, format, printer);
         }
     }
-    
+
+    public static class ANN {
+
+        public static void simulate200(int times) throws IOException {
+            AnnealingInfo info = new AnnealingInfo();
+            info.finalTemp = 0.0001;
+            info.startingTemp = 1;
+            info.iterationLimit = 50;
+            info.maxStagnation = 50;
+            info.tempUpdate = (a) -> a * 0.99;
+            simulate(times, "200.txt", "200ANN.txt", info);
+        }
+
+        public static void simulate(int times, String pathGraph, String output, AnnealingInfo par) throws IOException {
+            Orgraph graph = new Orgraph();
+            API.importGraph(graph, pathGraph);
+            logAnnealingSimulations(graph, par, times, output);
+        }
+
+        public static void logAnnealingSimulations(Orgraph gr, AnnealingInfo par, int times, String path) throws IOException {
+            int nodes = gr.nodes.size();
+            int links = gr.bidirectionalLinkCount();
+            String[] format = ArrayOp.asArray(
+                    "Nodes",
+                    "Bi-Links",
+                    "Alowed Stagnation",
+                    "Total path generations",
+                    "Failed path generations",
+                    "Successfull path generations",
+                    "Global improvements",
+                    "Straight improvements",
+                    "Deteriorations",
+                    "Reached stagnation",
+                    "Reached temp",
+                    "Path evaluations",
+                    "Best cost"
+            );
+            Value<AnnealingResult> val = new Value<>();
+            Lambda.L0R<Object[]> printer = Lambda.of(() -> {
+                AnnealingResult get = val.get();
+                return new Object[]{
+                    nodes,
+                    links,
+                    par.maxStagnation,
+                    get.successGenerations + get.failedGenerations,
+                    get.failedGenerations,
+                    get.successGenerations,
+                    get.globalImprovements,
+                    get.straightImprovements,
+                    get.deteriorations,
+                    get.maxStagnationReached,
+                    get.reachedTemp,
+                    get.weightEvaluations,
+                    get.bestSoFarWeight
+                    
+                };
+            });
+            Runnable run = () -> {
+                AnnealingResult result = new AnnealingResult();
+                Annealing.anneal(gr, rng.get(), par, result);
+                val.set(result);
+                Log.print("Is path valid? ", API.isPathValid(gr, result.bestSoFar));
+            };
+
+            logSimulations(times, path, run, format, printer);
+        }
+    }
+
 }
