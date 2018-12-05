@@ -15,11 +15,13 @@ import java.util.stream.Stream;
 import lt.lb.commons.F;
 import lt.lb.commons.Lambda;
 import lt.lb.commons.Log;
+import lt.lb.commons.containers.tuples.Tuple;
 import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
+import lt.lb.commons.interfaces.Equator;
 import lt.lb.commons.interfaces.ReadOnlyIterator;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.commons.misc.rng.RandomRange;
@@ -38,11 +40,27 @@ public class Annealing {
 
     public static Executor exe = new FastWaitingExecutor(8, WaitTime.ofSeconds(2));
 
+    public static enum Move {
+        SWAP, INSERT, REMOVE
+    }
+
+    public static class PathProduce {
+
+        public Move type;
+        public Integer one, two;
+
+        public PathProduce(Move type, Integer one, Integer two) {
+            this.type = type;
+            this.one = one;
+            this.two = two;
+        }
+    }
+
     public static class NeighborhoodTuple {
 
-        AtomicLong fails = new AtomicLong();
-        AtomicLong success = new AtomicLong();
-        Collection<List<Long>> paths = new ConcurrentLinkedDeque<>();
+        public AtomicLong fails = new AtomicLong();
+        public AtomicLong success = new AtomicLong();
+        public Collection<Tuple<List<Long>, PathProduce>> paths = new ConcurrentLinkedDeque<>();
 
     }
     public static Lambda.L2RS<NeighborhoodTuple> add = (t1, t2) -> {
@@ -72,7 +90,7 @@ public class Annealing {
 
                     String pathValid = API.isPathValid(gr, newPath);
                     if (pathValid.equalsIgnoreCase("Yes")) {
-                        create.paths.add(newPath);
+                        create.paths.add(new Tuple<>(newPath, new PathProduce(Move.SWAP, i, j)));
                         create.success.incrementAndGet();
                     } else {
                         create.fails.incrementAndGet();
@@ -102,7 +120,7 @@ public class Annealing {
                 }
                 String pathValid = API.isPathValid(gr, newPath);
                 if (pathValid.equalsIgnoreCase("Yes")) {
-                    create.paths.add(newPath);
+                    create.paths.add(new Tuple<>(newPath, new PathProduce(Move.REMOVE, i, null)));
                     create.success.incrementAndGet();
                 } else {
                     create.fails.incrementAndGet();
@@ -138,7 +156,7 @@ public class Annealing {
 
                     String pathValid = API.isPathValid(gr, newPath);
                     if (pathValid.equalsIgnoreCase("Yes")) {
-                        create.paths.add(newPath);
+                        create.paths.add(new Tuple<>(newPath, new PathProduce(Move.INSERT, i, null)));
                         create.success.incrementAndGet();
                     } else {
                         create.fails.incrementAndGet();
@@ -162,7 +180,6 @@ public class Annealing {
     public static NeighborhoodTuple neighborhoodDefault(Orgraph gr, List<Long> path, int depth) {
 
         NeighborhoodCombiner comRemove = (g, p) -> {
-
             return Annealing.neighborhoodRemove(g, p, depth);
         };
         NeighborhoodCombiner comSwap = (g, p) -> {
@@ -174,7 +191,7 @@ public class Annealing {
         Log.print("Apply combiners");
         NeighborhoodTuple applyCombiners = Annealing.applyCombiners(gr, path, Arrays.asList(comSwap, comRemove, comVertex));
         if (depth == 0) {
-            Predicate<List<Long>> filterDistinct = F.filterDistinct(Objects::equals);
+            Predicate<Tuple<List<Long>, PathProduce>> filterDistinct = F.filterDistinct(Equator.valueEquator(t -> t.g1));
             F.filterInPlace(applyCombiners.paths, filterDistinct);
         }
         return applyCombiners;
@@ -220,19 +237,24 @@ public class Annealing {
         Double currentPathWeight = Algorithms.getPathWeight(path, gr);
 
         while (temp > finalTemp) {
+            int limit = (int) (info.iterationLimit * temp);
             Log.print("With temp:", temp);
-            int iteration = (int) (info.iterationLimit * temp);
+
+            int iteration = 0;
 
             boolean improved = false;
-            while (iteration > 0) {
-                iteration--;
+            while (iteration < limit) {
+                iteration++;
                 NeighborhoodTuple def = Annealing.neighborhoodDefault(gr, path, 0);
-                List<Long> randPath = rng.pickRandom(def.paths);
+                List<Long> randPath = rng.pickRandom(def.paths).g1;
+
+                // optimization to append on the ends
                 long lastNode = randPath.get(randPath.size() - 1);
                 ArrayList<GLink> links = API.getLinks(randPath, gr);
 
                 List<GLink> betterPath = PathGenerator.genericUniquePathBidirectionalVisitContinued(gr, lastNode, links, new HashSet<>(randPath), linkPickerCombined);
                 randPath = API.getNodesIDs(betterPath);
+
                 Log.print("Generated paths", def.paths.size());
                 Double newPathWeight = Algorithms.getPathWeight(randPath, gr);
                 result.weightEvaluations++;

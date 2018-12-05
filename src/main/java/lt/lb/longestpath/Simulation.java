@@ -23,6 +23,9 @@ import lt.lb.longestpath.antcolony.AntsSimulation;
 import lt.lb.longestpath.antcolony.AntsSimulationParams;
 import lt.lb.longestpath.genetic.GeneticSimulationParams;
 import lt.lb.longestpath.genetic.GraphAgent;
+import lt.lb.longestpath.tabu.TabuInfo;
+import lt.lb.longestpath.tabu.TabuResult;
+import lt.lb.longestpath.tabu.TabuSearch;
 import lt.lb.neurevol.evolution.NEAT.NeatPool;
 
 /**
@@ -31,7 +34,7 @@ import lt.lb.neurevol.evolution.NEAT.NeatPool;
  */
 public class Simulation {
 
-    public static ThreadLocal<RandomDistribution> rng = ThreadLocal.withInitial(() -> RandomDistribution.uniform(new FastRandom()));
+    public static ThreadLocal<RandomDistribution> rng = ThreadLocal.withInitial(() -> RandomDistribution.uniform(new FastRandom(123)));
 
     public static void main(String[] str) throws IOException {
 
@@ -39,7 +42,7 @@ public class Simulation {
         Log.main().keepBufferForFile = false;
         Log.main().stackTrace = false;
 
-        ANN.simulate200(1);
+        TABU.simulate200(1);
         Log.print("END");
 
         F.unsafeRun(() -> {
@@ -260,6 +263,68 @@ public class Simulation {
             Runnable run = () -> {
                 AnnealingResult result = new AnnealingResult();
                 Annealing.anneal(gr, rng.get(), par, result);
+                val.set(result);
+                Log.print("Is path valid? ", API.isPathValid(gr, result.bestSoFar));
+            };
+
+            logSimulations(times, path, run, format, printer);
+        }
+    }
+    
+    public static class TABU {
+
+        public static void simulate200(int times) throws IOException {
+            TabuInfo info = new TabuInfo();
+            info.iterationLimit = 500;
+            info.maxStagnation = 100;
+            info.tabuDecay = 1d;
+            simulate(times, "200.txt", "200TABU.txt", info);
+        }
+
+        public static void simulate(int times, String pathGraph, String output, TabuInfo par) throws IOException {
+            Orgraph graph = new Orgraph();
+            API.importGraph(graph, pathGraph);
+            logTabuSimulations(graph, par, times, output);
+        }
+
+        public static void logTabuSimulations(Orgraph gr, TabuInfo par, int times, String path) throws IOException {
+            int nodes = gr.nodes.size();
+            int links = gr.bidirectionalLinkCount();
+            String[] format = ArrayOp.asArray(
+                    "Nodes",
+                    "Bi-Links",
+                    "Alowed Stagnation",
+                    "Total path generations",
+                    "Failed path generations",
+                    "Successfull path generations",
+                    "Global improvements",
+                    "Straight improvements",
+                    "Deteriorations",
+                    "Reached stagnation",
+                    "Reached temp",
+                    "Path evaluations",
+                    "Best cost"
+            );
+            Value<TabuResult> val = new Value<>();
+            Lambda.L0R<Object[]> printer = Lambda.of(() -> {
+                TabuResult get = val.get();
+                return new Object[]{
+                    nodes,
+                    links,
+                    par.maxStagnation,
+                    get.successGenerations + get.failedGenerations,
+                    get.failedGenerations,
+                    get.successGenerations,
+                    get.straightImprovements,
+                    get.maxStagnationReached,
+                    get.weightEvaluations,
+                    get.bestSoFarWeight
+                    
+                };
+            });
+            Runnable run = () -> {
+                TabuResult result = new TabuResult();
+                TabuSearch.tabuSolutions(gr, rng.get(), par, result);
                 val.set(result);
                 Log.print("Is path valid? ", API.isPathValid(gr, result.bestSoFar));
             };
