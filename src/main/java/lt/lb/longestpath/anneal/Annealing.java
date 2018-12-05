@@ -47,9 +47,9 @@ public class Annealing {
     public static class PathProduce {
 
         public Move type;
-        public Integer one, two;
+        public Long one, two;
 
-        public PathProduce(Move type, Integer one, Integer two) {
+        public PathProduce(Move type, Long one, Long two) {
             this.type = type;
             this.one = one;
             this.two = two;
@@ -90,7 +90,7 @@ public class Annealing {
 
                     String pathValid = API.isPathValid(gr, newPath);
                     if (pathValid.equalsIgnoreCase("Yes")) {
-                        create.paths.add(new Tuple<>(newPath, new PathProduce(Move.SWAP, i, j)));
+                        create.paths.add(new Tuple<>(newPath, new PathProduce(Move.SWAP, path.get(i), path.get(j))));
                         create.success.incrementAndGet();
                     } else {
                         create.fails.incrementAndGet();
@@ -120,7 +120,7 @@ public class Annealing {
                 }
                 String pathValid = API.isPathValid(gr, newPath);
                 if (pathValid.equalsIgnoreCase("Yes")) {
-                    create.paths.add(new Tuple<>(newPath, new PathProduce(Move.REMOVE, i, null)));
+                    create.paths.add(new Tuple<>(newPath, new PathProduce(Move.REMOVE, path.get(i), null)));
                     create.success.incrementAndGet();
                 } else {
                     create.fails.incrementAndGet();
@@ -156,7 +156,7 @@ public class Annealing {
 
                     String pathValid = API.isPathValid(gr, newPath);
                     if (pathValid.equalsIgnoreCase("Yes")) {
-                        create.paths.add(new Tuple<>(newPath, new PathProduce(Move.INSERT, i, null)));
+                        create.paths.add(new Tuple<>(newPath, new PathProduce(Move.INSERT, v, null)));
                         create.success.incrementAndGet();
                     } else {
                         create.fails.incrementAndGet();
