@@ -1,2 +1,0 @@
-Nodes, Bi-Links, Alowed Stagnation, Total path generations, Failed path generations, Successfull path generations, Global improvements, Straight improvements, Deteriorations, Reached stagnation, Reached temp, Path evaluations, Best cost
-200, 517, 100, 4340800, 4318764, 22036, 9, 101, 664, 811.0

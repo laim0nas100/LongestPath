@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
@@ -237,7 +235,7 @@ public class Annealing {
         Double currentPathWeight = Algorithms.getPathWeight(path, gr);
 
         while (temp > finalTemp) {
-            int limit = (int) (info.iterationLimit * temp);
+            int limit = (int) (info.iterationsPerTemp * temp);
             Log.print("With temp:", temp);
 
             int iteration = 0;

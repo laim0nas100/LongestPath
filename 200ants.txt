@@ -1,2 +1,0 @@
-Nodes, Bi-Links, Ants, AlowedStagnation, Iteration reached, Improvements, Path evaluations, Best cost
-200, 517, 10, 50, 344, 24, 3451, 1064.0

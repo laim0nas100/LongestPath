@@ -81,7 +81,7 @@ public class TabuSearch {
                     improvements++;
                 }
                 double freq = tabu.getOrDefault(newPath, NumberValue.of(1d)).get();
-                ranges.add(new RandomRange(new Tuple3(newPath, newPathLength, tuplePath.g2), 1 / freq));
+                ranges.add(new RandomRange(new Tuple3(newPath, newPathLength, tuplePath.g2), newPathLength / freq));
             }
             RandomRanges<Tuple3<List<Long>, Double, PathProduce>> rr = new RandomRanges(ranges);
 
@@ -161,7 +161,7 @@ public class TabuSearch {
                     improvements++;
                 }
                 double freq = tabu.getOrDefault(newPath, NumberValue.of(1d)).get();
-                ranges.add(new RandomRange(new Tuple3(newPath, newPathLength, tuplePath.g2), 1 / freq));
+                ranges.add(new RandomRange(new Tuple3(newPath, newPathLength, tuplePath.g2), newPathLength / freq));
             }
             RandomRanges<Tuple3<List<Long>, Double, PathProduce>> rr = new RandomRanges(ranges);
 

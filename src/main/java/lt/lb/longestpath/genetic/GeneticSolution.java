@@ -17,7 +17,6 @@ import lt.lb.commons.containers.tuples.Tuple;
 import lt.lb.commons.containers.tuples.Tuples;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
-import lt.lb.commons.interfaces.Equator;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.longestpath.API;
 

@@ -12,7 +12,7 @@ import java.util.function.Function;
  * @author laim0nas100
  */
 public class AnnealingInfo {
-    public int iterationLimit;
+    public int iterationsPerTemp;
     public double startingTemp;
     public double finalTemp;
     public int maxStagnation;

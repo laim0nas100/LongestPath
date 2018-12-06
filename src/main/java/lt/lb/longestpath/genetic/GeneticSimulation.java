@@ -6,12 +6,9 @@
 package lt.lb.longestpath.genetic;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
-import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.commons.threads.FastWaitingExecutor;
@@ -41,7 +38,7 @@ public class GeneticSimulation {
     public NeatPool<GraphAgent> pool;
     public int improvements = 0;
 
-    public GeneticSimulation(Orgraph graph, ThreadLocal<RandomDistribution> uniform,GeneticSimulationParams info) {
+    public GeneticSimulation(Orgraph graph, ThreadLocal<RandomDistribution> uniform, GeneticSimulationParams info) {
         NEATConfig<GraphAgent> config = new NEATConfig<GraphAgent>() {
             @Override
             public Pool<GraphAgent> getPool() {
