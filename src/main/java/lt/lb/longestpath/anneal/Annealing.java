@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -25,9 +26,7 @@ import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.commons.misc.rng.RandomRange;
 import lt.lb.commons.misc.rng.RandomRanges;
 import lt.lb.commons.threads.FastExecutor;
-import lt.lb.commons.threads.FastWaitingExecutor;
 import lt.lb.commons.threads.TaskBatcher;
-import lt.lb.commons.threads.sync.WaitTime;
 import lt.lb.longestpath.API;
 
 /**
@@ -36,7 +35,7 @@ import lt.lb.longestpath.API;
  */
 public class Annealing {
 
-    public static Executor exe = new FastWaitingExecutor(8, WaitTime.ofSeconds(2));
+    public static Executor exe = Executors.newCachedThreadPool();
 
     public static enum Move {
         SWAP, INSERT, REMOVE
@@ -61,6 +60,7 @@ public class Annealing {
         public Collection<Tuple<List<Long>, PathProduce>> paths = new ConcurrentLinkedDeque<>();
 
     }
+    
     public static Lambda.L2RS<NeighborhoodTuple> add = (t1, t2) -> {
         NeighborhoodTuple tuple = new NeighborhoodTuple();
         tuple.fails = new AtomicLong(t1.fails.addAndGet(t2.fails.get()));
@@ -74,7 +74,7 @@ public class Annealing {
         Log.print("Apply swap");
         NeighborhoodTuple create = new NeighborhoodTuple();
         F.iterate(path, (i, v1) -> {
-            TaskBatcher batcher = new TaskBatcher(new FastExecutor(4));
+            TaskBatcher batcher = new TaskBatcher(exe);
 
             F.iterate(path, 1, (j, v2) -> {
                 batcher.execute(() -> {
@@ -105,7 +105,7 @@ public class Annealing {
     public static NeighborhoodTuple neighborhoodRemove(Orgraph gr, List<Long> path, int depth) {
         Log.print("Apply remove");
         NeighborhoodTuple create = new NeighborhoodTuple();
-        TaskBatcher batcher = new TaskBatcher(new FastExecutor(4));
+        TaskBatcher batcher = new TaskBatcher(exe);
         F.iterate(path, (i, v) -> {
             batcher.execute(() -> {
                 List<Long> newPath = new ArrayList<>(path.size());
@@ -136,7 +136,7 @@ public class Annealing {
         Stream<Long> filter = gr.nodes.keySet().stream().filter(n -> !path.contains(n));
         ReadOnlyIterator<Long> unsusedVertex = ReadOnlyIterator.of(filter);
         F.iterate(unsusedVertex, (i, v) -> {
-            TaskBatcher batcher = new TaskBatcher(new FastExecutor(4));
+            TaskBatcher batcher = new TaskBatcher(exe);
             F.iterate(path, (j, v2) -> {
                 batcher.execute(() -> {
                     List<Long> newPath = new ArrayList<>(path.size());
