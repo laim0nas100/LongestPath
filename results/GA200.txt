@@ -1,0 +1,1 @@
+Nodes, Bi-Links, Population, AlowedStagnation, TargetSpecies, MaxSpecies, Species at end, Generation reached, Ok crossovers, Invalid crossovers, Improvements, Path evaluations, Best cost

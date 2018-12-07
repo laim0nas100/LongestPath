@@ -19,6 +19,7 @@ import lt.lb.commons.Log;
 import lt.lb.commons.containers.Value;
 import lt.lb.commons.containers.tuples.Tuple;
 import lt.lb.commons.graphtheory.Orgraph;
+import lt.lb.commons.graphtheory.paths.GraphGenerator;
 import lt.lb.commons.misc.rng.FastRandom;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.longestpath.anneal.Annealing;
@@ -46,11 +47,176 @@ public class Simulation {
         Log.main().async = true;
         Log.main().keepBufferForFile = false;
         Log.main().stackTrace = false;
+        
+        //simulate ANTS
+        F.checkedRun(()->{
+            AntsSimulationParams asi = new AntsSimulationParams();
+            asi.maxStagnation = 50;
+            asi.iterations = 1000;
+            asi.ants = 10;
+            ANTS.simulate(30, "200.txt", "results/ANTS200.txt", asi);
+        });
+        System.gc();
+        F.checkedRun(()->{
+            AntsSimulationParams asi = new AntsSimulationParams();
+            asi.maxStagnation = 50;
+            asi.iterations = 1000;
+            asi.ants = 50;
+            ANTS.simulate(30, "1000.txt", "results/ANTS1000.txt", asi);
+        });
+        System.gc();
+        F.checkedRun(()->{
+            AntsSimulationParams asi = new AntsSimulationParams();
+            asi.maxStagnation = 50;
+            asi.iterations = 1000;
+            asi.ants = 100;
+            ANTS.simulate(30, "3000.txt", "results/ANTS3000.txt", asi);
+        });
+        System.gc();
+        
+        //Simulate GA
+        F.checkedRun(()->{
+            GeneticSimulationParams param = new GeneticSimulationParams();
+            param.maxStagnation = 50;
+            param.iterations = 1000;
+            param.population = 100;
+            param.distinctSpecies = param.population / 20;
+            param.crossoverChance = 0.3;
+            param.maxSpecies = param.population /10;
+            GA.simulate(30, "200.txt", "results/GA200.txt", param);
+        });
+        System.gc();
+        
+        F.checkedRun(()->{
+            GeneticSimulationParams param = new GeneticSimulationParams();
+            param.maxStagnation = 50;
+            param.iterations = 1000;
+            param.population = 200;
+            param.distinctSpecies = param.population / 20;
+            param.crossoverChance = 0.3;
+            param.maxSpecies = param.population /10;
+            GA.simulate(30, "1000.txt", "results/GA1000.txt", param);
+        });
+        System.gc();
+        
+        F.checkedRun(()->{
+            GeneticSimulationParams param = new GeneticSimulationParams();
+            param.maxStagnation = 50;
+            param.iterations = 1000;
+            param.population =200;
+            param.distinctSpecies = param.population / 20;
+            param.crossoverChance = 0.3;
+            param.maxSpecies = param.population /10;
+            GA.simulate(30, "3000.txt", "results/GA3000.txt", param);
+        });
+        System.gc();
+        
+        //Simulate Annealing
+        
+        F.checkedRun(()->{
+            AnnealingInfo param = new AnnealingInfo();
+            param.finalTemp = 0.0001;
+            param.startingTemp = 1;
+            param.iterationsPerTemp = 50;
+            param.maxStagnation = 50;
+            param.tempUpdate = (a) -> a * 0.95;
+            ANN.simulate(30, "200.txt", "results/200ANN.txt", param);
+        });
+        System.gc();
+        
+        F.checkedRun(()->{
+            AnnealingInfo param = new AnnealingInfo();
+            param.finalTemp = 0.0001;
+            param.startingTemp = 1;
+            param.iterationsPerTemp = 50;
+            param.maxStagnation = 50;
+            param.tempUpdate = (a) -> a * 0.95;
+            ANN.simulate(30, "1000.txt", "results/1000ANN.txt", param);
+        });
+        System.gc();
+        
+        F.checkedRun(()->{
+            AnnealingInfo param = new AnnealingInfo();
+            param.finalTemp = 0.0001;
+            param.startingTemp = 1;
+            param.iterationsPerTemp = 50;
+            param.maxStagnation = 50;
+            param.tempUpdate = (a) -> a * 0.95;
+            ANN.simulate(30, "3000.txt", "results/3000ANN.txt", param);
+        });
+        System.gc();
+        
+        //TABU
+        
+        F.checkedRun(()->{
+            TabuInfo info = new TabuInfo();
+            info.iterationLimit = 500;
+            info.maxStagnation = 100;
+            info.tabuDecay = 0.90d;
+            TABU.simulateMoves(30, "200.txt", "results/200TABUmoves.txt", info);
+        });
+        
+        System.gc();
+        
+        
+        F.checkedRun(()->{
+            TabuInfo info = new TabuInfo();
+            info.iterationLimit = 500;
+            info.maxStagnation = 100;
+            info.tabuDecay = 0.90d;
+            TABU.simulateMoves(30, "1000.txt", "results/1000TABUmoves.txt", info);
+        });
+        System.gc();
+        
+        F.checkedRun(()->{
+            TabuInfo info = new TabuInfo();
+            info.iterationLimit = 500;
+            info.maxStagnation = 100;
+            info.tabuDecay = 0.90d;
+            TABU.simulateMoves(30, "3000.txt", "results/3000TABUmoves.txt", info);
+        });
+        System.gc();
 
-        Orgraph graph = new Orgraph();
-        API.importGraph(graph, "200.txt");
-
-        BulkSimulate.TABU.allTABUSimulations(graph);
+        
+        F.checkedRun(()->{
+            TabuInfo info = new TabuInfo();
+            info.iterationLimit = 500;
+            info.maxStagnation = 100;
+            info.tabuDecay = 0.90d;
+            TABU.simulateSolutions(30, "200.txt", "results/200TABUsolutions.txt", info);
+        });
+        
+        System.gc();
+        
+        
+        F.checkedRun(()->{
+            TabuInfo info = new TabuInfo();
+            info.iterationLimit = 500;
+            info.maxStagnation = 100;
+            info.tabuDecay = 0.90d;
+            TABU.simulateSolutions(30, "1000.txt", "results/1000TABUsolutions.txt", info);
+        });
+        System.gc();
+        
+        F.checkedRun(()->{
+            TabuInfo info = new TabuInfo();
+            info.iterationLimit = 500;
+            info.maxStagnation = 100;
+            info.tabuDecay = 0.90d;
+            TABU.simulateSolutions(30, "3000.txt", "results/3000TABUsolutions.txt", info);
+        });
+        System.gc();
+        
+//        Orgraph graph = new Orgraph();
+//        RandomDistribution r = rng.get();
+//        Supplier<Double> sup = () -> {
+//            return r.nextInt(1, 10).doubleValue();
+//        };
+//        GraphGenerator.generateSimpleConnected(r, graph, 3000, sup);
+//
+//        GraphGenerator.addSomeBidirectionalLinksToAllNodes(rng.get(), graph, 50, sup);
+//
+//        API.exportGraph(graph, "3000.txt");
 
         Log.print("END");
 
@@ -296,13 +462,19 @@ public class Simulation {
             info.iterationLimit = 500;
             info.maxStagnation = 100;
             info.tabuDecay = 1d;
-            simulate(times, "200.txt", "200TABU.txt", info);
+            simulateSolutions(times, "200.txt", "200TABU.txt", info);
         }
 
-        public static void simulate(int times, String pathGraph, String output, TabuInfo par) throws IOException {
+        public static void simulateSolutions(int times, String pathGraph, String output, TabuInfo par) throws IOException {
             Orgraph graph = new Orgraph();
             API.importGraph(graph, pathGraph);
             logTabuSolutionsSimulations(graph, par, times, output);
+        }
+        
+        public static void simulateMoves(int times, String pathGraph, String output, TabuInfo par) throws IOException{
+            Orgraph graph = new Orgraph();
+            API.importGraph(graph, pathGraph);
+            logTabuMovesSimulations(graph, par, times, output);
         }
 
         public static void logTabuSolutionsSimulations(Orgraph gr, TabuInfo par, int times, String path) throws IOException {
@@ -346,6 +518,7 @@ public class Simulation {
 
             logSimulations(times, path, run, format, printer);
         }
+
         public static void logTabuMovesSimulations(Orgraph gr, TabuInfo par, int times, String path) throws IOException {
             int nodes = gr.nodes.size();
             int links = gr.bidirectionalLinkCount();
