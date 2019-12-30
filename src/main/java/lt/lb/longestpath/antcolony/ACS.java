@@ -11,10 +11,11 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
-import lt.lb.commons.containers.BooleanValue;
-import lt.lb.commons.containers.NumberValue;
-import lt.lb.commons.containers.Value;
+import lt.lb.commons.containers.values.BooleanValue;
+import lt.lb.commons.containers.values.NumberValue;
+import lt.lb.commons.containers.values.Value;
 import lt.lb.commons.containers.tuples.Pair;
+import lt.lb.commons.containers.values.IntegerValue;
 import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.GNode;
@@ -34,8 +35,8 @@ public class ACS {
 
     }
 
-    public NumberValue<Integer> iteration;
-    public NumberValue<Integer> currStagnation;
+    public IntegerValue iteration;
+    public IntegerValue currStagnation;
     public ExtComparator<AntBoi> cmp = ExtComparator.of((a, b) -> Double.compare(a.cost.get(), b.cost.get()));
     public ArrayList<AntBoi> bests = new ArrayList<>();
 
@@ -50,7 +51,7 @@ public class ACS {
     public AntBoi search(ACSinfo info, int iterations, int ants, int maxStagnation, double localPheromoneInfluence, double decay) {
         Log.print("Start ACS simulation");
         Value<AntBoi> best = new Value<>(new AntBoi(info, this.constructInitialSolution(info)));
-        currStagnation = NumberValue.of(0);
+        currStagnation = new IntegerValue(0);
 
         double initPheromone = 1d / best.get().cost.get();
         Log.print("Init pheromone:" + initPheromone);
@@ -64,7 +65,7 @@ public class ACS {
         FastWaitingExecutor exeMain = new FastWaitingExecutor(ants);
 
         PheromoneBasedLinkPicker picker = new PheromoneBasedLinkPicker(info);
-        iteration = NumberValue.of(0);
+        iteration =  new IntegerValue(0);
         for (; iteration.get() < iterations; iteration.incrementAndGet()) {
             BooleanValue updated = BooleanValue.FALSE();
             ConcurrentLinkedDeque<Runnable> updates = new ConcurrentLinkedDeque<>();

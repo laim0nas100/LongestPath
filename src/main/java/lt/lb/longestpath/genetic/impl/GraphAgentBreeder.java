@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
 import lt.lb.commons.containers.tuples.Pair;
@@ -67,7 +68,7 @@ public class GraphAgentBreeder implements AgentBreeder<GraphAgent> {
         };
         Log.print("Bridges");
         
-        ArrayList<Pair<Long>> pairs = F.fillCollection(bridges.stream().map(API.link2Pair).filter(good),new ArrayList<>());
+        List<Pair<Long>> pairs = bridges.stream().map(API.link2Pair).filter(good).collect(Collectors.toList());
         
         
         

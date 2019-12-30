@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
-import lt.lb.commons.containers.NumberValue;
+import lt.lb.commons.containers.values.NumberValue;
 import lt.lb.commons.containers.tuples.Tuple;
 import lt.lb.commons.containers.tuples.Tuple3;
 import lt.lb.commons.graphtheory.Algorithms;

@@ -6,15 +6,22 @@
 package lt.lb.longestpath.genetic;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lt.lb.commons.ArrayOp;
 import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.graphtheory.*;
 import lt.lb.commons.F;
 import lt.lb.commons.Log;
+import lt.lb.commons.Predicates;
 import lt.lb.commons.containers.tuples.Tuple;
 import lt.lb.commons.containers.tuples.Tuples;
+import lt.lb.commons.func.StreamMapper;
+import lt.lb.commons.func.StreamMapper.StreamDecorator;
+import lt.lb.commons.func.StreamMapperEnder;
+import lt.lb.commons.func.StreamMappers;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
 import lt.lb.commons.misc.rng.RandomDistribution;
@@ -152,8 +159,8 @@ public class GeneticSolution {
         Set<Long> visited = new HashSet<>(nodes);
 
         List<Tuple<Double, ILinkPicker>> pickers = Arrays.asList(
-                Tuples.create(1d, PathGenerator.nodeDegreeDistributed(rnd,false))
-//                ,Tuples.create(1d, PathGenerator.nodeWeightDistributed(rnd, false))
+                Tuples.create(1d, PathGenerator.nodeDegreeDistributed(rnd, false))
+        //                ,Tuples.create(1d, PathGenerator.nodeWeightDistributed(rnd, false))
         );
 
         List<GLink> genericUniquePathVisitContinued = PathGenerator.genericUniquePathVisitContinued(gr, startNode, path, visited, API.probabilityJoinedPickers(pickers, rnd));
@@ -181,15 +188,12 @@ public class GeneticSolution {
         List<GNode> nodes1 = API.getNodes(gr, path1);
         List<GNode> nodes2 = API.getNodes(gr, path2);
 
-        ArrayList<GLink> bridges = new ArrayList<>();
-
-        F.iterate(nodes1, (i, n) -> {
-            bridges.addAll(getPossibleLinks(gr, n, nodes2));
-        });
-        Predicate<GLink> filterDistinct = F.filterDistinct(GLink::equalNodesBidirectional);
-        Stream<GLink> stream = bridges.stream().filter(filterDistinct);
-        return F.fillCollection(stream, new ArrayList<>());
-
+        return StreamDecorator.of(nodes1)
+                .flatMapIterable(n -> getPossibleLinks(gr, n, nodes2))
+                .apply(StreamMappers.distinct(GLink::equalNodesBidirectional))
+                .collect(Collectors.toCollection(ArrayList::new))
+                .startingWithOpt(nodes1);
+        
     }
 
 }

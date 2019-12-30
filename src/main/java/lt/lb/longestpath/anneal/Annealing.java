@@ -12,8 +12,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lt.lb.commons.F;
-import lt.lb.commons.Lambda;
+import lt.lb.commons.func.Lambda;
 import lt.lb.commons.Log;
+import lt.lb.commons.Predicates;
 import lt.lb.commons.containers.tuples.Tuple;
 import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
@@ -21,7 +22,7 @@ import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.graphtheory.paths.PathGenerator;
 import lt.lb.commons.graphtheory.paths.PathGenerator.ILinkPicker;
 import lt.lb.commons.interfaces.Equator;
-import lt.lb.commons.interfaces.ReadOnlyIterator;
+import lt.lb.commons.iteration.ReadOnlyIterator;
 import lt.lb.commons.misc.rng.RandomDistribution;
 import lt.lb.commons.misc.rng.RandomRange;
 import lt.lb.commons.misc.rng.RandomRanges;
@@ -189,7 +190,7 @@ public class Annealing {
         Log.print("Apply combiners");
         NeighborhoodTuple applyCombiners = Annealing.applyCombiners(gr, path, Arrays.asList(comSwap, comRemove, comVertex));
         if (depth == 0) {
-            Predicate<Tuple<List<Long>, PathProduce>> filterDistinct = F.filterDistinct(Equator.valueEquator(t -> t.g1));
+            Predicate<Tuple<List<Long>, PathProduce>> filterDistinct = Predicates.filterDistinct(Equator.valueEquator(t -> t.g1));
             F.filterInPlace(applyCombiners.paths, filterDistinct);
         }
         return applyCombiners;

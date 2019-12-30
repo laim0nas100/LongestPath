@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lt.lb.commons.F;
-import lt.lb.commons.containers.NumberValue;
+import lt.lb.commons.containers.values.NumberValue;
 import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.containers.tuples.Tuple3;
 import lt.lb.commons.graphtheory.GLink;

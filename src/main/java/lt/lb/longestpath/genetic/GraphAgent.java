@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import lt.lb.commons.UUIDgenerator;
-import lt.lb.commons.containers.LazyValue;
+import lt.lb.commons.containers.caching.LazyValue;
 import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.commons.graphtheory.Orgraph;

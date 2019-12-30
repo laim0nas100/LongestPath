@@ -7,7 +7,7 @@ package lt.lb.longestpath.antcolony;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import lt.lb.commons.containers.NumberValue;
+import lt.lb.commons.containers.values.NumberValue;
 import lt.lb.commons.containers.tuples.Pair;
 import lt.lb.commons.graphtheory.Orgraph;
 import lt.lb.commons.misc.rng.RandomDistribution;

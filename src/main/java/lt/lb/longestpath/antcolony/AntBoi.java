@@ -7,7 +7,7 @@ package lt.lb.longestpath.antcolony;
 
 import java.util.ArrayList;
 import java.util.List;
-import lt.lb.commons.containers.LazyValue;
+import lt.lb.commons.containers.caching.LazyValue;
 import lt.lb.commons.graphtheory.Algorithms;
 import lt.lb.commons.graphtheory.GLink;
 import lt.lb.longestpath.API;
